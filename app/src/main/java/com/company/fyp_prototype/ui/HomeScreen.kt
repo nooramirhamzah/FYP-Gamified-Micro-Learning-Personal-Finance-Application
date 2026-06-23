@@ -20,10 +20,22 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import com.company.fyp_prototype.ui.theme.*
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun HomeScreen(onLessonSelect: (String) -> Unit = {}, onNavigate: (String) -> Unit = {}) {
+fun HomeScreen(
+    userViewModel: UserViewModel? = null,
+    onLessonSelect: (String) -> Unit = {},
+    onNavigate: (String) -> Unit = {}
+) {
+    val coins by (userViewModel?.coins ?: remember { MutableStateFlow(1250) }).collectAsState()
+    val completedLessons by (userViewModel?.completedLessons ?: remember { MutableStateFlow(emptyList<String>()) }).collectAsState()
+
     Scaffold(
         bottomBar = { BottomNavigationBar(onNavigate) },
         containerColor = BackgroundWhite
@@ -35,7 +47,7 @@ fun HomeScreen(onLessonSelect: (String) -> Unit = {}, onNavigate: (String) -> Un
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item { TopHeader() }
+            item { TopHeader(coins) }
             item { Spacer(modifier = Modifier.height(24.dp)) }
             item { ProgressCard() }
             item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -53,33 +65,49 @@ fun HomeScreen(onLessonSelect: (String) -> Unit = {}, onNavigate: (String) -> Un
             
             // Learning Path
             item {
+                val status = if (completedLessons.contains("intro")) QuestStatus.COMPLETED else QuestStatus.CURRENT
                 QuestItem(
                     title = "Intro to Money",
-                    status = QuestStatus.COMPLETED,
+                    status = status,
                     showLine = true,
                     onClick = { onLessonSelect("intro") }
                 )
             }
             item {
+                val status = when {
+                    completedLessons.contains("budget") -> QuestStatus.COMPLETED
+                    completedLessons.contains("intro") -> QuestStatus.CURRENT
+                    else -> QuestStatus.LOCKED
+                }
                 QuestItem(
                     title = "The 50-30-20 Rule",
-                    status = QuestStatus.COMPLETED,
+                    status = status,
                     showLine = true,
                     onClick = { onLessonSelect("budget") }
                 )
             }
             item {
+                val status = when {
+                    completedLessons.contains("emergency") -> QuestStatus.COMPLETED
+                    completedLessons.contains("budget") -> QuestStatus.CURRENT
+                    else -> QuestStatus.LOCKED
+                }
                 QuestItem(
                     title = "Emergency Funds",
-                    status = QuestStatus.COMPLETED,
+                    status = status,
                     showLine = true,
                     onClick = { onLessonSelect("emergency") }
                 )
             }
             item {
+                val status = when {
+                    completedLessons.contains("high_yield") -> QuestStatus.COMPLETED
+                    completedLessons.contains("emergency") -> QuestStatus.CURRENT
+                    else -> QuestStatus.LOCKED
+                }
                 QuestItem(
                     title = "High Yield Savings",
-                    status = QuestStatus.CURRENT,
+                    status = status,
                     description = "Grow your money faster with the right account.",
                     showLine = false,
                     onClick = { onLessonSelect("high_yield") }
@@ -91,7 +119,7 @@ fun HomeScreen(onLessonSelect: (String) -> Unit = {}, onNavigate: (String) -> Un
 }
 
 @Composable
-fun TopHeader() {
+fun TopHeader(coins: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,7 +159,7 @@ fun TopHeader() {
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "1,250",
+                    text = coins.toString(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = TextDark

@@ -20,9 +20,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.company.fyp_prototype.ui.theme.*
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 
 @Composable
-fun IntroQuizScreen(onBack: () -> Unit = {}, onFinish: () -> Unit = {}) {
+fun IntroQuizScreen(
+    userViewModel: UserViewModel? = null,
+    onBack: () -> Unit = {},
+    onFinish: () -> Unit = {}
+) {
     var selectedOption by remember { mutableStateOf<Int?>(0) } // Defaulting to A for the "Correct" look in the UI image
 
     Scaffold(
@@ -110,7 +115,11 @@ fun IntroQuizScreen(onBack: () -> Unit = {}, onFinish: () -> Unit = {}) {
         bottomBar = {
             Box(modifier = Modifier.padding(24.dp)) {
                 Button(
-                    onClick = onFinish,
+                    onClick = {
+                        userViewModel?.addCoins(50)
+                        userViewModel?.completeLesson("intro")
+                        onFinish()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),

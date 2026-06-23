@@ -21,9 +21,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.company.fyp_prototype.ui.theme.*
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 
 @Composable
-fun HighYieldQuizScreen(onBack: () -> Unit = {}, onFinish: () -> Unit = {}) {
+fun HighYieldQuizScreen(
+    userViewModel: UserViewModel? = null,
+    onBack: () -> Unit = {},
+    onFinish: () -> Unit = {}
+) {
     var selectedOption by remember { mutableStateOf<Int?>(1) }
 
     Scaffold(
@@ -76,7 +81,11 @@ fun HighYieldQuizScreen(onBack: () -> Unit = {}, onFinish: () -> Unit = {}) {
         bottomBar = {
             Box(modifier = Modifier.padding(24.dp)) {
                 Button(
-                    onClick = onFinish,
+                    onClick = {
+                        userViewModel?.addCoins(50)
+                        userViewModel?.completeLesson("high_yield")
+                        onFinish()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),

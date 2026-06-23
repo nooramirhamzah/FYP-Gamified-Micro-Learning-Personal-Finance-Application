@@ -21,9 +21,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.company.fyp_prototype.ui.theme.*
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 
 @Composable
-fun EmergencyFundsQuizScreen(onBack: () -> Unit = {}, onDone: () -> Unit = {}) {
+fun EmergencyFundsQuizScreen(
+    userViewModel: UserViewModel? = null,
+    onBack: () -> Unit = {},
+    onDone: () -> Unit = {}
+) {
     var selectedOption by remember { mutableStateOf<Int?>(1) } // Defaulting to 1 (Deposit immediately) for the "Correct" look
 
     Scaffold(
@@ -76,7 +81,11 @@ fun EmergencyFundsQuizScreen(onBack: () -> Unit = {}, onDone: () -> Unit = {}) {
         bottomBar = {
             Box(modifier = Modifier.padding(24.dp)) {
                 Button(
-                    onClick = onDone,
+                    onClick = {
+                        userViewModel?.addCoins(50)
+                        userViewModel?.completeLesson("emergency")
+                        onDone()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),

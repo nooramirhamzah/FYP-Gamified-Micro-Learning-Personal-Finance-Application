@@ -23,11 +23,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.company.fyp_prototype.ui.theme.*
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PortfolioScreen(onBack: () -> Unit = {}, onNavigate: (String) -> Unit = {}) {
+fun PortfolioScreen(
+    userViewModel: UserViewModel? = null,
+    onBack: () -> Unit = {},
+    onNavigate: (String) -> Unit = {}
+) {
+    val coins by (userViewModel?.coins ?: remember { kotlinx.coroutines.flow.MutableStateFlow(2450) }).collectAsState()
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -66,7 +75,7 @@ fun PortfolioScreen(onBack: () -> Unit = {}, onNavigate: (String) -> Unit = {}) 
             Row(modifier = Modifier.fillMaxWidth()) {
                 AssetCard(
                     label = "Available",
-                    value = "2,450",
+                    value = coins.toString(),
                     unit = "Coins",
                     icon = Icons.Default.MonetizationOn,
                     iconColor = PrimaryGreen,
@@ -109,7 +118,7 @@ fun PortfolioScreen(onBack: () -> Unit = {}, onNavigate: (String) -> Unit = {}) 
 
             val storeItems = listOf(
                 StoreItem("Golden Piggy", "Epic Rarity", "500", "SKIN", Icons.Default.Savings, Color(0xFFFFD700), false),
-                StoreItem("Market Master", "Legendary", "10,000", "BADGE", Icons.AutoMirrored.Filled.TrendingUp, Color(0xFF00C853), true),
+                StoreItem("Market Master", "Legendary", "1000", "BADGE", Icons.AutoMirrored.Filled.TrendingUp, Color(0xFF00C853), false),
                 StoreItem("Crypto Wizard", "Avatar Frame", "750", "FRAME", Icons.Default.AccountCircle, Color(0xFF2196F3), false),
                 StoreItem("Interest Boost", "2x Multiplier", "250", "POWER-UP", Icons.Default.Bolt, Color(0xFFFFC107), false)
             )
@@ -121,7 +130,9 @@ fun PortfolioScreen(onBack: () -> Unit = {}, onNavigate: (String) -> Unit = {}) 
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(storeItems) { item ->
-                    StoreItemCard(item)
+                    StoreItemCard(item, onBuy = {
+                        userViewModel?.buyItem(item.price.toInt(), item.name)
+                    })
                 }
             }
         }
@@ -202,7 +213,7 @@ data class StoreItem(
 )
 
 @Composable
-fun StoreItemCard(item: StoreItem) {
+fun StoreItemCard(item: StoreItem, onBuy: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -272,7 +283,7 @@ fun StoreItemCard(item: StoreItem) {
                     }
                 } else {
                     Button(
-                        onClick = { /* TODO */ },
+                        onClick = onBuy,
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),

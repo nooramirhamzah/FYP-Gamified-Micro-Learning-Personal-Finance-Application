@@ -4,11 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.company.fyp_prototype.data.local.AppDatabase
 import com.company.fyp_prototype.ui.BudgetLessonScreen
 import com.company.fyp_prototype.ui.EmergencyFundsLessonScreen
 import com.company.fyp_prototype.ui.EmergencyFundsQuizScreen
@@ -21,8 +23,15 @@ import com.company.fyp_prototype.ui.PortfolioScreen
 import com.company.fyp_prototype.ui.ProfileScreen
 import com.company.fyp_prototype.ui.QuizScreen
 import com.company.fyp_prototype.ui.theme.FYP_PrototypeTheme
+import com.company.fyp_prototype.ui.viewmodel.UserViewModel
+import com.company.fyp_prototype.ui.viewmodel.UserViewModelFactory
 
 class MainActivity : ComponentActivity() {
+    private val database by lazy { AppDatabase.getDatabase(this) }
+    private val userViewModel: UserViewModel by viewModels {
+        UserViewModelFactory(database.userDao())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -36,6 +45,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     when (currentScreen) {
                         "home" -> HomeScreen(
+                            userViewModel = userViewModel,
                             onLessonSelect = { lessonId ->
                                 currentScreen = when (lessonId) {
                                     "budget" -> "budget_lesson"
@@ -51,10 +61,13 @@ class MainActivity : ComponentActivity() {
                             onContinue = { currentScreen = "intro_quiz" }
                         )
                         "intro_quiz" -> IntroQuizScreen(
+                            userViewModel = userViewModel,
                             onBack = { currentScreen = "lesson" },
                             onFinish = { currentScreen = "home" }
                         )
                         "quiz" -> QuizScreen(
+                            userViewModel = userViewModel,
+                            lessonId = "budget",
                             onBack = { currentScreen = "budget_lesson" },
                             onComplete = { currentScreen = "home" }
                         )
@@ -67,6 +80,7 @@ class MainActivity : ComponentActivity() {
                             onContinue = { currentScreen = "emergency_quiz" }
                         )
                         "emergency_quiz" -> EmergencyFundsQuizScreen(
+                            userViewModel = userViewModel,
                             onBack = { currentScreen = "emergency_lesson" },
                             onDone = { currentScreen = "home" }
                         )
@@ -75,10 +89,12 @@ class MainActivity : ComponentActivity() {
                             onContinue = { currentScreen = "high_yield_quiz" }
                         )
                         "high_yield_quiz" -> HighYieldQuizScreen(
+                            userViewModel = userViewModel,
                             onBack = { currentScreen = "high_yield_lesson" },
                             onFinish = { currentScreen = "home" }
                         )
                         "portfolio" -> PortfolioScreen(
+                            userViewModel = userViewModel,
                             onBack = { currentScreen = "home" },
                             onNavigate = { route -> currentScreen = route }
                         )
