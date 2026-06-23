@@ -1,5 +1,6 @@
 package com.company.fyp_prototype.ui
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,157 +30,256 @@ fun EmergencyFundsQuizScreen(
     onBack: () -> Unit = {},
     onDone: () -> Unit = {}
 ) {
-    var selectedOption by remember { mutableStateOf<Int?>(1) } // Defaulting to 1 (Deposit immediately) for the "Correct" look
+    var currentQuestionIndex by remember { mutableIntStateOf(0) }
+    var selectedOption by remember { mutableStateOf<Int?>(null) }
+    var score by remember { mutableIntStateOf(0) }
+    var isQuizFinished by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = BackgroundWhite,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE0E0E0).copy(alpha = 0.5f))
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                // Segmented Progress Bar
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    repeat(5) { index ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(8.dp)
-                                .clip(CircleShape)
-                                .background(if (index < 3) PrimaryGreen else Color(0xFFE0E0E0))
+    val coins by (userViewModel?.coins ?: remember { kotlinx.coroutines.flow.MutableStateFlow(500) }).collectAsState()
+
+    if (isQuizFinished) {
+        EmergencyQuizResultsState(
+            score = score,
+            totalQuestions = emergencyMockQuestions.size,
+            onFinish = {
+                userViewModel?.addCoins(score * 15) // Emergency fund quiz awards 15 coins per correct answer
+                userViewModel?.completeLesson("emergency")
+                onDone()
+            }
+        )
+    } else {
+        val currentQuestion = emergencyMockQuestions[currentQuestionIndex]
+
+        Scaffold(
+            containerColor = BackgroundWhite,
+            topBar = {
+                EmergencyQuizTopBar(
+                    onBack = onBack,
+                    currentIndex = currentQuestionIndex + 1,
+                    total = emergencyMockQuestions.size
+                )
+            },
+            bottomBar = {
+                Box(modifier = Modifier.padding(24.dp)) {
+                    Button(
+                        onClick = {
+                            if (selectedOption == currentQuestion.correctOptionIndex) {
+                                score++
+                            }
+                            
+                            if (currentQuestionIndex < emergencyMockQuestions.size - 1) {
+                                currentQuestionIndex++
+                                selectedOption = null
+                            } else {
+                                isQuizFinished = true
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selectedOption != null) PrimaryGreen else Color(0xFFE0E0E0)
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        enabled = selectedOption != null
+                    ) {
+                        Text(
+                            text = if (currentQuestionIndex == emergencyMockQuestions.size - 1) "Finish Quiz" else "Next Question",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedOption != null) Color.White else Color.Gray
                         )
                     }
                 }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Coin Badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFFF9C4),
+                        shadowElevation = 0.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("$", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "$coins coins",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = Color(0xFFFFA000)
+                            )
+                        }
+                    }
+                }
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
                 Text(
-                    "3/5",
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    text = currentQuestion.text,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
+                        textAlign = TextAlign.Start
+                    ),
+                    lineHeight = 32.sp
                 )
-            }
-        },
-        bottomBar = {
-            Box(modifier = Modifier.padding(24.dp)) {
-                Button(
-                    onClick = {
-                        userViewModel?.addCoins(50)
-                        userViewModel?.completeLesson("emergency")
-                        onDone()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                // Grid of options
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        QuizGridOption(
+                            text = currentQuestion.options[0].text,
+                            icon = currentQuestion.options[0].icon,
+                            isSelected = selectedOption == 0,
+                            onClick = { selectedOption = 0 },
+                            modifier = Modifier.weight(1f)
+                        )
+                        QuizGridOption(
+                            text = currentQuestion.options[1].text,
+                            icon = currentQuestion.options[1].icon,
+                            isSelected = selectedOption == 1,
+                            onClick = { selectedOption = 1 },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (currentQuestion.options.size > 2) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            QuizGridOption(
+                                text = currentQuestion.options[2].text,
+                                icon = currentQuestion.options[2].icon,
+                                isSelected = selectedOption == 2,
+                                onClick = { selectedOption = 2 },
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (currentQuestion.options.size > 3) {
+                                QuizGridOption(
+                                    text = currentQuestion.options[3].text,
+                                    icon = currentQuestion.options[3].icon,
+                                    isSelected = selectedOption == 3,
+                                    onClick = { selectedOption = 3 },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
             }
         }
-    ) { paddingValues ->
-        Column(
+    }
+}
+
+@Composable
+fun EmergencyQuizTopBar(onBack: () -> Unit, currentIndex: Int, total: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBack,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE0E0E0).copy(alpha = 0.5f))
         ) {
-            // Coin Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFFFFF9C4),
-                    shadowElevation = 0.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("$", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "500 coins",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color(0xFFFFA000)
-                        )
-                    }
-                }
+            Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        // Segmented Progress Bar
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            repeat(total) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(8.dp)
+                        .clip(CircleShape)
+                        .background(if (index < currentIndex) PrimaryGreen else Color(0xFFE0E0E0))
+                )
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Text(
-                text = "You just received a $50 bonus. What is the smartest move for your emergency fund?",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TextDark,
-                    textAlign = TextAlign.Start
-                ),
-                lineHeight = 32.sp
-            )
-            
-            Spacer(modifier = Modifier.height(40.dp))
-            
-            // Grid of options
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    QuizGridOption(
-                        text = "Spend it on dinner",
-                        icon = Icons.Default.Restaurant,
-                        isSelected = selectedOption == 0,
-                        onClick = { selectedOption = 0 },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuizGridOption(
-                        text = "Deposit $50 immediately",
-                        icon = Icons.Default.Savings,
-                        isSelected = selectedOption == 1,
-                        isCorrect = true,
-                        onClick = { selectedOption = 1 },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    QuizGridOption(
-                        text = "Invest in crypto",
-                        icon = Icons.Default.CurrencyBitcoin,
-                        isSelected = selectedOption == 2,
-                        onClick = { selectedOption = 2 },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuizGridOption(
-                        text = "Buy a gift",
-                        icon = Icons.Default.CardGiftcard,
-                        isSelected = selectedOption == 3,
-                        onClick = { selectedOption = 3 },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Text(
+            "$currentIndex/$total",
+            color = Color.Gray,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+fun EmergencyQuizResultsState(score: Int, totalQuestions: Int, onFinish: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundWhite)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.Shield,
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = PrimaryGreen
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text(
+            text = "Safety Net Secured!",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextDark,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "You answered $score out of $totalQuestions questions correctly about emergency funds.",
+            fontSize = 18.sp,
+            color = TextGray,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        Button(
+            onClick = onFinish,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -226,13 +326,13 @@ fun QuizGridOption(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape)
-                        .background(if (isSelected && isCorrect) PrimaryGreen else Color(0xFFF5F5F5)),
+                        .background(if (isSelected) PrimaryGreen else Color(0xFFF5F5F5)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = if (isSelected && isCorrect) Color.White else Color.Gray,
+                        tint = if (isSelected) Color.White else Color.Gray,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -251,6 +351,116 @@ fun QuizGridOption(
         }
     }
 }
+
+data class EmergencyOption(val text: String, val icon: ImageVector)
+data class EmergencyQuestion(
+    val text: String,
+    val options: List<EmergencyOption>,
+    val correctOptionIndex: Int
+)
+
+val emergencyMockQuestions = listOf(
+    EmergencyQuestion(
+        "You just received a $50 bonus. What is the smartest move for your emergency fund?",
+        listOf(
+            EmergencyOption("Spend it on dinner", Icons.Default.Restaurant),
+            EmergencyOption("Deposit immediately", Icons.Default.Savings),
+            EmergencyOption("Invest in crypto", Icons.Default.CurrencyBitcoin),
+            EmergencyOption("Buy a gift", Icons.Default.CardGiftcard)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "How many months of expenses should a basic emergency fund cover?",
+        listOf(
+            EmergencyOption("1 Month", Icons.Default.Event),
+            EmergencyOption("3-6 Months", Icons.Default.CalendarMonth),
+            EmergencyOption("12 Months", Icons.Default.History),
+            EmergencyOption("None", Icons.Default.Close)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "Which of these is a valid reason to use your emergency fund?",
+        listOf(
+            EmergencyOption("New TV sale", Icons.Default.Tv),
+            EmergencyOption("Sudden car repair", Icons.Default.DirectionsCar),
+            EmergencyOption("Weekend trip", Icons.Default.Flight),
+            EmergencyOption("Fancy clothes", Icons.Default.Checkroom)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "Where is the best place to keep an emergency fund?",
+        listOf(
+            EmergencyOption("Under mattress", Icons.Default.Bed),
+            EmergencyOption("High-yield savings", Icons.Default.TrendingUp),
+            EmergencyOption("Stock market", Icons.Default.ShowChart),
+            EmergencyOption("Checking account", Icons.Default.CreditCard)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "What is the first step in building an emergency fund?",
+        listOf(
+            EmergencyOption("Calculate expenses", Icons.Default.Calculate),
+            EmergencyOption("Quit your job", Icons.Default.WorkOff),
+            EmergencyOption("Buy a safe", Icons.Default.Lock),
+            EmergencyOption("Take a loan", Icons.Default.AccountBalance)
+        ),
+        0
+    ),
+    EmergencyQuestion(
+        "What should you do after using money from your emergency fund?",
+        listOf(
+            EmergencyOption("Ignore it", Icons.Default.VisibilityOff),
+            EmergencyOption("Refill it ASAP", Icons.Default.AddBusiness),
+            EmergencyOption("Close the account", Icons.Default.Cancel),
+            EmergencyOption("Spend the rest", Icons.Default.ShoppingCart)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "An emergency fund is meant to provide...",
+        listOf(
+            EmergencyOption("Wealth", Icons.Default.Paid),
+            EmergencyOption("Financial security", Icons.Default.VerifiedUser),
+            EmergencyOption("Quick profit", Icons.Default.Speed),
+            EmergencyOption("High risk", Icons.Default.Warning)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "Which expense is NOT usually part of an emergency fund calculation?",
+        listOf(
+            EmergencyOption("Rent", Icons.Default.Home),
+            EmergencyOption("Groceries", Icons.Default.Restaurant),
+            EmergencyOption("Movie tickets", Icons.Default.Movie),
+            EmergencyOption("Utilities", Icons.Default.Lightbulb)
+        ),
+        2
+    ),
+    EmergencyQuestion(
+        "If you have high-interest debt and no emergency fund, you should...",
+        listOf(
+            EmergencyOption("Ignore debt", Icons.Default.RemoveCircle),
+            EmergencyOption("Build small fund first", Icons.Default.Construction),
+            EmergencyOption("Invest in gold", Icons.Default.Toll),
+            EmergencyOption("Take more debt", Icons.Default.AddCard)
+        ),
+        1
+    ),
+    EmergencyQuestion(
+        "Liquidity in an emergency fund means...",
+        listOf(
+            EmergencyOption("It's made of cash", Icons.Default.Payments),
+            EmergencyOption("Easy to access", Icons.Default.TouchApp),
+            EmergencyOption("It's frozen", Icons.Default.AcUnit),
+            EmergencyOption("It's a loan", Icons.Default.RequestQuote)
+        ),
+        1
+    )
+)
 
 @Preview(showBackground = true)
 @Composable
