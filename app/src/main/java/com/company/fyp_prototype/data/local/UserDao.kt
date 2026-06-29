@@ -13,4 +13,7 @@ interface UserDao {
 
     @Query("UPDATE user_progress SET coins = :newCoins WHERE id = 1")
     suspend fun updateCoins(newCoins: Int)
+
+    @Query("DELETE FROM user_progress")
+    suspend fun clearUserProgress()
 }

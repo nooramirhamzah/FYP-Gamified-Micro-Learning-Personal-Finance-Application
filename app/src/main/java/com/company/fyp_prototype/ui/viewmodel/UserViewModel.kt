@@ -19,6 +19,9 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         it?.completedLessons?.split(",")?.filter { id -> id.isNotEmpty() } ?: emptyList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val completedLessonSet: StateFlow<Set<String>> = completedLessons.map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     val earnedBadges: StateFlow<List<String>> = _userProgress.map { 
         it?.earnedBadges?.split(",")?.filter { name -> name.isNotEmpty() } ?: emptyList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -26,7 +29,8 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
     fun addCoins(amount: Int) {
         viewModelScope.launch {
             val currentProgress = _userProgress.value ?: UserProgressEntity()
-            userDao.insertOrUpdate(currentProgress.copy(coins = currentProgress.coins + amount))
+            val updatedProgress = currentProgress.copy(coins = currentProgress.coins + amount)
+            userDao.insertOrUpdate(checkAndUnlockBadges(updatedProgress))
         }
     }
 
@@ -36,11 +40,89 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
             val currentLessons = currentProgress.completedLessons.split(",").toMutableList()
             if (!currentLessons.contains(lessonId)) {
                 currentLessons.add(lessonId)
-                userDao.insertOrUpdate(currentProgress.copy(
+                val updatedProgress = currentProgress.copy(
                     completedLessons = currentLessons.filter { it.isNotEmpty() }.joinToString(",")
-                ))
+                )
+                userDao.insertOrUpdate(checkAndUnlockBadges(updatedProgress))
             }
         }
+    }
+
+    fun completeQuiz(lessonId: String, score: Int, coinsPerCorrectAnswer: Int = 15) {
+        viewModelScope.launch {
+            val currentProgress = _userProgress.value ?: UserProgressEntity()
+            val completedLessonIds = currentProgress.completedLessons.toMutableCsvSet()
+            completedLessonIds.add(lessonId)
+
+            val updatedProgress = currentProgress.copy(
+                coins = currentProgress.coins + (score * coinsPerCorrectAnswer),
+                completedLessons = completedLessonIds.toCsvString()
+            )
+
+            userDao.insertOrUpdate(
+                checkAndUnlockBadges(
+                    progress = updatedProgress,
+                    completedQuizLessonId = lessonId,
+                    quizScore = score
+                )
+            )
+        }
+    }
+
+    fun unlockBadge(badgeName: String) {
+        viewModelScope.launch {
+            val currentProgress = _userProgress.value ?: UserProgressEntity()
+            val badgeNames = currentProgress.earnedBadges.toMutableCsvSet()
+            if (badgeNames.add(badgeName)) {
+                userDao.insertOrUpdate(currentProgress.copy(earnedBadges = badgeNames.toCsvString()))
+            }
+        }
+    }
+
+    fun checkAndUnlockBadges() {
+        viewModelScope.launch {
+            val currentProgress = _userProgress.value ?: UserProgressEntity()
+            userDao.insertOrUpdate(checkAndUnlockBadges(currentProgress))
+        }
+    }
+
+    fun resetUserProgress() {
+        viewModelScope.launch {
+            userDao.clearUserProgress()
+            userDao.insertOrUpdate(
+                UserProgressEntity(
+                    coins = 0,
+                    completedLessons = "",
+                    earnedBadges = ""
+                )
+            )
+        }
+    }
+
+    private fun checkAndUnlockBadges(
+        progress: UserProgressEntity,
+        completedQuizLessonId: String? = null,
+        quizScore: Int? = null
+    ): UserProgressEntity {
+        val badgeNames = progress.earnedBadges.toMutableCsvSet()
+
+        if (progress.coins >= 100) {
+            badgeNames.add("Thrifty Saver")
+        }
+
+        if (quizScore != null && quizScore >= 8 && completedQuizLessonId != null) {
+            quizMasterBadgeFor(completedQuizLessonId)?.let { badgeNames.add(it) }
+        }
+
+        return progress.copy(earnedBadges = badgeNames.toCsvString())
+    }
+
+    private fun quizMasterBadgeFor(lessonId: String): String? = when (lessonId) {
+        "intro" -> "Money Basics Master"
+        "budget" -> "Budget Master"
+        "emergency" -> "Emergency Fund Master"
+        "high_yield" -> "Savings Master"
+        else -> null
     }
 
     fun buyItem(price: Int, itemName: String): Boolean {
@@ -67,3 +149,11 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         }
     }
 }
+
+private fun String.toMutableCsvSet(): MutableSet<String> =
+    split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .toMutableSet()
+
+private fun Set<String>.toCsvString(): String = joinToString(",")

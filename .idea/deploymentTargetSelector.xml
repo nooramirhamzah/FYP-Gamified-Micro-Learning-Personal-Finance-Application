@@ -8,6 +8,11 @@
       </SelectionState>
       <SelectionState runConfigName="EmergencyFundsLessonScreenPreview">
         <option name="selectionMode" value="DROPDOWN" />
+        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="HighYieldQuizScreenPreview">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DialogSelection />
       </SelectionState>
     </selectionStates>
   </component>

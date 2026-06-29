@@ -11,17 +11,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.company.fyp_prototype.data.local.AppDatabase
-import com.company.fyp_prototype.ui.BudgetLessonScreen
-import com.company.fyp_prototype.ui.EmergencyFundsLessonScreen
-import com.company.fyp_prototype.ui.EmergencyFundsQuizScreen
-import com.company.fyp_prototype.ui.HighYieldQuizScreen
-import com.company.fyp_prototype.ui.HighYieldSavingsLessonScreen
-import com.company.fyp_prototype.ui.HomeScreen
-import com.company.fyp_prototype.ui.IntroQuizScreen
-import com.company.fyp_prototype.ui.LessonScreen
-import com.company.fyp_prototype.ui.PortfolioScreen
-import com.company.fyp_prototype.ui.ProfileScreen
-import com.company.fyp_prototype.ui.QuizScreen
+import com.company.fyp_prototype.ui.home.HomeScreen
+import com.company.fyp_prototype.ui.lessons.BudgetLessonScreen
+import com.company.fyp_prototype.ui.lessons.EmergencyFundsLessonScreen
+import com.company.fyp_prototype.ui.lessons.HighYieldSavingsLessonScreen
+import com.company.fyp_prototype.ui.lessons.LessonScreen
+import com.company.fyp_prototype.ui.profile.PortfolioScreen
+import com.company.fyp_prototype.ui.profile.ProfileScreen
+import com.company.fyp_prototype.ui.quizzes.EmergencyFundsQuizScreen
+import com.company.fyp_prototype.ui.quizzes.HighYieldQuizScreen
+import com.company.fyp_prototype.ui.quizzes.IntroQuizScreen
+import com.company.fyp_prototype.ui.quizzes.QuizScreen
 import com.company.fyp_prototype.ui.theme.FYP_PrototypeTheme
 import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 import com.company.fyp_prototype.ui.viewmodel.UserViewModelFactory
@@ -48,24 +48,25 @@ class MainActivity : ComponentActivity() {
                             userViewModel = userViewModel,
                             onLessonSelect = { lessonId ->
                                 currentScreen = when (lessonId) {
+                                    "intro" -> "intro_lesson"
                                     "budget" -> "budget_lesson"
                                     "emergency" -> "emergency_lesson"
                                     "high_yield" -> "high_yield_lesson"
-                                    else -> "lesson"
+                                    else -> "home"
                                 }
                             },
                             onNavigate = { route -> currentScreen = route }
                         )
-                        "lesson" -> LessonScreen(
+                        "intro_lesson", "lesson" -> LessonScreen(
                             onBack = { currentScreen = "home" },
                             onContinue = { currentScreen = "intro_quiz" }
                         )
                         "intro_quiz" -> IntroQuizScreen(
                             userViewModel = userViewModel,
-                            onBack = { currentScreen = "lesson" },
+                            onBack = { currentScreen = "intro_lesson" },
                             onFinish = { currentScreen = "home" }
                         )
-                        "quiz" -> QuizScreen(
+                        "budget_quiz", "quiz" -> QuizScreen(
                             userViewModel = userViewModel,
                             lessonId = "budget",
                             onBack = { currentScreen = "budget_lesson" },
@@ -73,7 +74,7 @@ class MainActivity : ComponentActivity() {
                         )
                         "budget_lesson" -> BudgetLessonScreen(
                             onBack = { currentScreen = "home" },
-                            onContinue = { currentScreen = "quiz" }
+                            onContinue = { currentScreen = "budget_quiz" }
                         )
                         "emergency_lesson" -> EmergencyFundsLessonScreen(
                             onBack = { currentScreen = "home" },
@@ -99,6 +100,7 @@ class MainActivity : ComponentActivity() {
                             onNavigate = { route -> currentScreen = route }
                         )
                         "profile" -> ProfileScreen(
+                            userViewModel = userViewModel,
                             onBack = { currentScreen = "home" },
                             onNavigate = { route -> currentScreen = route }
                         )
