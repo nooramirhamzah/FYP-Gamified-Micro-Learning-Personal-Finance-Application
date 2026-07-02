@@ -53,6 +53,7 @@ fun QuizScreen(
         QuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
+            reward = userViewModel.calculateLessonReward(score, totalQuestions),
             onFinish = onComplete
         )
     } else {
@@ -81,7 +82,7 @@ fun QuizScreen(
 
                         if (isLastQuestion) {
                             if (!isQuizSaved) {
-                                userViewModel.completeQuiz(lessonId, updatedScore)
+                                userViewModel.completeQuiz(lessonId, updatedScore, totalQuestions)
                                 isQuizSaved = true
                             }
                             isQuizFinished = true
@@ -292,6 +293,7 @@ fun QuizBottomBar(
 fun QuizResultsState(
     score: Int,
     totalQuestions: Int,
+    reward: Int,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -339,7 +341,7 @@ fun QuizResultsState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "You earned ${score * 15} coins!",
+            text = "You earned $reward coins!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = PrimaryGreen
@@ -443,6 +445,6 @@ private val budgetQuestions = arrayOf(
 @Composable
 fun QuizScreenPreview() {
     FYP_PrototypeTheme {
-        QuizResultsState(score = 8, totalQuestions = 10, onFinish = {})
+        QuizResultsState(score = 8, totalQuestions = 10, reward = 85, onFinish = {})
     }
 }

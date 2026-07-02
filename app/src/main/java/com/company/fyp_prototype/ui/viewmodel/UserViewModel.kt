@@ -26,6 +26,38 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         it?.earnedBadges?.split(",")?.filter { name -> name.isNotEmpty() } ?: emptyList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val nickname: StateFlow<String> = _userProgress.map { it?.nickname.orEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+    val avatarEmoji: StateFlow<String> = _userProgress.map { it?.avatarEmoji ?: "🙂" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "🙂")
+
+    val hasCompletedOnboarding: StateFlow<Boolean> = _userProgress.map { it?.hasCompletedOnboarding == true }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun saveUserProfile(nickname: String, avatarEmoji: String, hasCompletedOnboarding: Boolean = true) {
+        viewModelScope.launch {
+            val currentProgress = _userProgress.value ?: UserProgressEntity()
+            userDao.insertOrUpdate(
+                currentProgress.copy(
+                    nickname = nickname.trim(),
+                    avatarEmoji = avatarEmoji,
+                    hasCompletedOnboarding = hasCompletedOnboarding
+                )
+            )
+        }
+    }
+
+    fun calculateLessonReward(correctAnswers: Int, totalQuestions: Int): Int {
+        if (totalQuestions <= 0) return 0
+
+        val baseReward = correctAnswers * 10
+        val accuracy = correctAnswers.toFloat() / totalQuestions.toFloat()
+        val performanceBonus = if (accuracy >= 0.80f) 5 else 0
+
+        return baseReward + performanceBonus
+    }
+
     fun addCoins(amount: Int) {
         viewModelScope.launch {
             val currentProgress = _userProgress.value ?: UserProgressEntity()
@@ -48,14 +80,15 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         }
     }
 
-    fun completeQuiz(lessonId: String, score: Int, coinsPerCorrectAnswer: Int = 15) {
+    fun completeQuiz(lessonId: String, score: Int, totalQuestions: Int) {
         viewModelScope.launch {
             val currentProgress = _userProgress.value ?: UserProgressEntity()
             val completedLessonIds = currentProgress.completedLessons.toMutableCsvSet()
             completedLessonIds.add(lessonId)
+            val reward = calculateLessonReward(score, totalQuestions)
 
             val updatedProgress = currentProgress.copy(
-                coins = currentProgress.coins + (score * coinsPerCorrectAnswer),
+                coins = currentProgress.coins + reward,
                 completedLessons = completedLessonIds.toCsvString()
             )
 
@@ -93,7 +126,10 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
                 UserProgressEntity(
                     coins = 0,
                     completedLessons = "",
-                    earnedBadges = ""
+                    earnedBadges = "",
+                    nickname = "",
+                    avatarEmoji = "🙂",
+                    hasCompletedOnboarding = false
                 )
             )
         }

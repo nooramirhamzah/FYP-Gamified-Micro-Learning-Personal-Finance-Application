@@ -46,6 +46,7 @@ fun IntroQuizScreen(
         IntroQuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
+            reward = userViewModel.calculateLessonReward(score, totalQuestions),
             onFinish = onFinish
         )
     } else {
@@ -71,7 +72,7 @@ fun IntroQuizScreen(
 
                             if (isLastQuestion) {
                                 if (!isQuizSaved) {
-                                    userViewModel.completeQuiz("intro", updatedScore)
+                                    userViewModel.completeQuiz("intro", updatedScore, totalQuestions)
                                     isQuizSaved = true
                                 }
                                 isQuizFinished = true
@@ -244,6 +245,7 @@ fun IntroQuizTopBar(
 fun IntroQuizResultsState(
     score: Int,
     totalQuestions: Int,
+    reward: Int,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -278,6 +280,16 @@ fun IntroQuizResultsState(
             text = "You scored $score/$totalQuestions!",
             fontSize = 18.sp,
             color = TextGray,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "You earned $reward coins!",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryGreen,
             textAlign = TextAlign.Center
         )
 
@@ -432,6 +444,6 @@ private val introQuestions = arrayOf(
 @Composable
 fun IntroQuizScreenPreview() {
     FYP_PrototypeTheme {
-        IntroQuizResultsState(score = 8, totalQuestions = 10, onFinish = {})
+        IntroQuizResultsState(score = 8, totalQuestions = 10, reward = 85, onFinish = {})
     }
 }

@@ -33,9 +33,13 @@ fun HomeScreen(
 ) {
     val coins by userViewModel.coins.collectAsState()
     val completedLessons by userViewModel.completedLessons.collectAsState()
+    val nickname by userViewModel.nickname.collectAsState()
+    val avatarEmoji by userViewModel.avatarEmoji.collectAsState()
 
     HomeContent(
         coins = coins,
+        nickname = nickname,
+        avatarEmoji = avatarEmoji,
         completedLessons = completedLessons,
         onLessonSelect = onLessonSelect,
         onNavigate = onNavigate
@@ -45,6 +49,8 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     coins: Int,
+    nickname: String,
+    avatarEmoji: String,
     completedLessons: List<String>,
     onLessonSelect: (String) -> Unit = {},
     onNavigate: (String) -> Unit = {}
@@ -60,9 +66,9 @@ private fun HomeContent(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item { TopHeader(coins) }
+            item { TopHeader(coins, nickname, avatarEmoji) }
             item { Spacer(modifier = Modifier.height(24.dp)) }
-            item { ProgressCard() }
+            item { ProgressCard(completedLessons = completedLessons) }
             item { Spacer(modifier = Modifier.height(32.dp)) }
             item {
                 Text(
@@ -77,10 +83,12 @@ private fun HomeContent(
             item { Spacer(modifier = Modifier.height(24.dp)) }
             
             // Learning Path
+            val currentLessonId = nextCurrentLessonId(completedLessons)
             item {
                 val status = questStatusFor(
                     lessonId = "intro",
                     completedLessons = completedLessons,
+                    currentLessonId = currentLessonId,
                     isUnlocked = true
                 )
                 QuestItem(
@@ -94,6 +102,7 @@ private fun HomeContent(
                 val status = questStatusFor(
                     lessonId = "budget",
                     completedLessons = completedLessons,
+                    currentLessonId = currentLessonId,
                     isUnlocked = completedLessons.contains("intro")
                 )
                 QuestItem(
@@ -107,6 +116,7 @@ private fun HomeContent(
                 val status = questStatusFor(
                     lessonId = "emergency",
                     completedLessons = completedLessons,
+                    currentLessonId = currentLessonId,
                     isUnlocked = completedLessons.contains("budget")
                 )
                 QuestItem(
@@ -120,7 +130,8 @@ private fun HomeContent(
                 val status = questStatusFor(
                     lessonId = "high_yield",
                     completedLessons = completedLessons,
-                    isUnlocked = completedLessons.contains("budget")
+                    currentLessonId = currentLessonId,
+                    isUnlocked = completedLessons.contains("emergency")
                 )
                 QuestItem(
                     title = "High Yield Savings",
@@ -138,15 +149,34 @@ private fun HomeContent(
 private fun questStatusFor(
     lessonId: String,
     completedLessons: List<String>,
+    currentLessonId: String?,
     isUnlocked: Boolean
 ): QuestStatus = when {
     completedLessons.contains(lessonId) -> QuestStatus.COMPLETED
-    isUnlocked -> QuestStatus.CURRENT
+    isUnlocked && lessonId == currentLessonId -> QuestStatus.CURRENT
     else -> QuestStatus.LOCKED
 }
 
+private fun nextCurrentLessonId(completedLessons: List<String>): String? {
+    return learningTree.firstOrNull { lesson ->
+        lesson.id !in completedLessons && lesson.isUnlocked(completedLessons)
+    }?.id
+}
+
+private fun LearningTreeItem.isUnlocked(completedLessons: List<String>): Boolean {
+    return when (id) {
+        "intro" -> true
+        "budget" -> "intro" in completedLessons
+        "emergency" -> "budget" in completedLessons
+        "high_yield" -> "emergency" in completedLessons
+        else -> false
+    }
+}
+
 @Composable
-fun TopHeader(coins: Int) {
+fun TopHeader(coins: Int, nickname: String, avatarEmoji: String) {
+    val displayName = nickname.ifBlank { "Learner" }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -154,15 +184,25 @@ fun TopHeader(coins: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(LockedGray),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Person, contentDescription = "Profile", tint = TextGray)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(LockedGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = avatarEmoji, fontSize = 24.sp)
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Text(
+                text = "Hi, $displayName",
+                color = TextDark,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         // XP Points
@@ -197,7 +237,19 @@ fun TopHeader(coins: Int) {
 }
 
 @Composable
-fun ProgressCard() {
+fun ProgressCard(completedLessons: List<String>) {
+    val totalLessons = learningTree.size
+    val completedCount = learningTree.count { it.id in completedLessons }
+    val progress = completedCount.toFloat() / totalLessons.toFloat()
+    val nextLesson = learningTree.firstOrNull { it.id !in completedLessons }
+    val title = nextLesson?.title ?: "Learning Tree Complete"
+    val progressText = "$completedCount/$totalLessons lessons"
+    val helperText = if (nextLesson == null) {
+        "All lessons complete. Great work!"
+    } else {
+        "${totalLessons - completedCount} lesson${if (totalLessons - completedCount == 1) "" else "s"} left to finish the learning tree."
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -206,7 +258,7 @@ fun ProgressCard() {
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(
-                text = "High Yield Savings",
+                text = title,
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -215,11 +267,11 @@ fun ProgressCard() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Level Progress", color = TextGray, fontSize = 14.sp)
-                Text("550/700 XP", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(progressText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { 0.78f },
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(12.dp)
@@ -229,13 +281,22 @@ fun ProgressCard() {
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "150 XP to get Savings Guru badge!",
+                text = helperText,
                 color = Color(0xFF9E9E9E),
                 fontSize = 12.sp
             )
         }
     }
 }
+
+private data class LearningTreeItem(val id: String, val title: String)
+
+private val learningTree = listOf(
+    LearningTreeItem("intro", "Intro to Money"),
+    LearningTreeItem("budget", "The 50-30-20 Rule"),
+    LearningTreeItem("emergency", "Emergency Funds"),
+    LearningTreeItem("high_yield", "High Yield Savings")
+)
 
 enum class QuestStatus { COMPLETED, CURRENT, LOCKED }
 
@@ -464,6 +525,8 @@ fun HomeScreenPreview() {
     FYP_PrototypeTheme {
         HomeContent(
             coins = 1250,
+            nickname = "Alex",
+            avatarEmoji = ":)",
             completedLessons = listOf("intro")
         )
     }

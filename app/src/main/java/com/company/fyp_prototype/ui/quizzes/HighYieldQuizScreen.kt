@@ -46,6 +46,7 @@ fun HighYieldQuizScreen(
         HighYieldQuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
+            reward = userViewModel.calculateLessonReward(score, totalQuestions),
             onFinish = onFinish
         )
     } else {
@@ -70,7 +71,7 @@ fun HighYieldQuizScreen(
 
                             if (isLastQuestion) {
                                 if (!isQuizSaved) {
-                                    userViewModel.completeQuiz("high_yield", updatedScore)
+                                    userViewModel.completeQuiz("high_yield", updatedScore, totalQuestions)
                                     isQuizSaved = true
                                 }
                                 isQuizFinished = true
@@ -225,6 +226,7 @@ fun HighYieldQuizTopBar(
 fun HighYieldQuizResultsState(
     score: Int,
     totalQuestions: Int,
+    reward: Int,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -259,6 +261,16 @@ fun HighYieldQuizResultsState(
             text = "You scored $score/$totalQuestions!",
             fontSize = 18.sp,
             color = TextGray,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "You earned $reward coins!",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryGreen,
             textAlign = TextAlign.Center
         )
 
@@ -391,6 +403,6 @@ private val highYieldQuestions = arrayOf(
 @Composable
 fun HighYieldQuizScreenPreview() {
     FYP_PrototypeTheme {
-        HighYieldQuizResultsState(score = 8, totalQuestions = 10, onFinish = {})
+        HighYieldQuizResultsState(score = 8, totalQuestions = 10, reward = 85, onFinish = {})
     }
 }

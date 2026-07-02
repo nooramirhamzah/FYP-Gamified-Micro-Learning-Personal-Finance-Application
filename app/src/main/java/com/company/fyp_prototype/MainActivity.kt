@@ -16,6 +16,7 @@ import com.company.fyp_prototype.ui.lessons.BudgetLessonScreen
 import com.company.fyp_prototype.ui.lessons.EmergencyFundsLessonScreen
 import com.company.fyp_prototype.ui.lessons.HighYieldSavingsLessonScreen
 import com.company.fyp_prototype.ui.lessons.LessonScreen
+import com.company.fyp_prototype.ui.onboarding.OnboardingScreen
 import com.company.fyp_prototype.ui.profile.PortfolioScreen
 import com.company.fyp_prototype.ui.profile.ProfileScreen
 import com.company.fyp_prototype.ui.quizzes.EmergencyFundsQuizScreen
@@ -36,14 +37,29 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var currentScreen by remember { mutableStateOf("home") }
+            val hasCompletedOnboarding by userViewModel.hasCompletedOnboarding.collectAsState()
+            var currentScreen by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(hasCompletedOnboarding) {
+                if (
+                    currentScreen == null ||
+                    (!hasCompletedOnboarding && currentScreen == "home") ||
+                    (hasCompletedOnboarding && currentScreen == "onboarding")
+                ) {
+                    currentScreen = if (hasCompletedOnboarding) "home" else "onboarding"
+                }
+            }
 
             FYP_PrototypeTheme(dynamicColor = false) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    when (currentScreen) {
+                    when (currentScreen ?: "onboarding") {
+                        "onboarding" -> OnboardingScreen(
+                            userViewModel = userViewModel,
+                            onComplete = { currentScreen = "home" }
+                        )
                         "home" -> HomeScreen(
                             userViewModel = userViewModel,
                             onLessonSelect = { lessonId ->

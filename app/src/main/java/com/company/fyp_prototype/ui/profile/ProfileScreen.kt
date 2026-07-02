@@ -14,6 +14,11 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,7 +38,23 @@ fun ProfileScreen(
     onBack: () -> Unit = {},
     onNavigate: (String) -> Unit = {}
 ) {
-    Scaffold(
+    val nickname by userViewModel.nickname.collectAsState()
+    val avatarEmoji by userViewModel.avatarEmoji.collectAsState()
+    val coins by userViewModel.coins.collectAsState()
+    val completedLessons by userViewModel.completedLessons.collectAsState()
+    val displayName = nickname.ifBlank { "Learner" }
+    val fullLeaderboardItems = buildRankedLeaderboard(displayName, coins)
+    val leaderboardItems = buildNearbyLeaderboardItems(fullLeaderboardItems)
+    var showFullLeaderboard by remember { mutableStateOf(false) }
+
+    if (showFullLeaderboard) {
+        FullLeaderboardScreen(
+            leaderboardItems = fullLeaderboardItems,
+            onBack = { showFullLeaderboard = false },
+            onNavigate = onNavigate
+        )
+    } else {
+        Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -79,11 +100,9 @@ fun ProfileScreen(
                             .background(LockedGray),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = Color.Gray
+                        Text(
+                            text = avatarEmoji,
+                            fontSize = 58.sp
                         )
                     }
                     Box(
@@ -107,7 +126,7 @@ fun ProfileScreen(
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Alex Winters",
+                    displayName,
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -133,14 +152,14 @@ fun ProfileScreen(
                 Row(modifier = Modifier.fillMaxWidth()) {
                     StatCard(
                         icon = Icons.AutoMirrored.Filled.MenuBook,
-                        value = "4",
+                        value = completedLessons.size.toString(),
                         label = "LESSONS COMPLETED",
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     StatCard(
                         icon = Icons.Default.MonetizationOn,
-                        value = "2,400",
+                        value = formatCoins(coins),
                         label = "COINS EARNED",
                         modifier = Modifier.weight(1f)
                     )
@@ -160,22 +179,17 @@ fun ProfileScreen(
                         "Leaderboard",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                    Text(
-                        "View All >",
-                        color = PrimaryGreen,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    TextButton(onClick = { showFullLeaderboard = true }) {
+                        Text(
+                            "View All >",
+                            color = PrimaryGreen,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            
-            // Leaderboard List
-            val leaderboardItems = listOf(
-                LeaderboardItemData(1, "Marcus Vance", "12,200", false),
-                LeaderboardItemData(2, "Elena Rossi", "11,900", false),
-                LeaderboardItemData(14, "You (Alex)", "2,400", true)
-            )
             
             items(leaderboardItems) { item ->
                 LeaderboardRow(item)
@@ -195,6 +209,7 @@ fun ProfileScreen(
 
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
+    }
     }
 }
 
@@ -244,6 +259,68 @@ fun DemoResetSection(onReset: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FullLeaderboardScreen(
+    leaderboardItems: List<LeaderboardItemData>,
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Leaderboard",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+            )
+        },
+        bottomBar = { ProfileBottomNavigationBar(onNavigate) },
+        containerColor = BackgroundWhite
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item { Spacer(modifier = Modifier.height(20.dp)) }
+            item {
+                Text(
+                    text = "Local demo ranking",
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = TextDark
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Your row uses your saved Room profile and coin total. Other learners are simulated peers for presentation.",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = TextGray,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+
+            items(leaderboardItems) { item ->
+                LeaderboardRow(item)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+}
+
 @Composable
 fun StatCard(icon: ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
     Card(
@@ -270,7 +347,41 @@ fun StatCard(icon: ImageVector, value: String, label: String, modifier: Modifier
     }
 }
 
-data class LeaderboardItemData(val rank: Int, val name: String, val coins: String, val isUser: Boolean)
+data class LeaderboardItemData(val rank: Int, val name: String, val coins: Int, val isUser: Boolean)
+
+private data class PeerProfile(val name: String, val coins: Int, val isUser: Boolean = false)
+
+private fun buildRankedLeaderboard(userName: String, userCoins: Int): List<LeaderboardItemData> {
+    val profiles = listOf(
+        PeerProfile("Marcus Vance", 1220),
+        PeerProfile("Elena Rossi", 980),
+        PeerProfile("Priya Tan", 740),
+        PeerProfile("Noah Lim", 520),
+        PeerProfile("Sara Wong", 310),
+        PeerProfile(userName, userCoins, isUser = true),
+        PeerProfile("Daniel Cho", 120),
+        PeerProfile("Maya Lee", 60)
+    ).sortedByDescending { it.coins }
+
+    return profiles.mapIndexed { index, profile ->
+        LeaderboardItemData(
+            rank = index + 1,
+            name = if (profile.isUser) "You (${profile.name})" else profile.name,
+            coins = profile.coins,
+            isUser = profile.isUser
+        )
+    }
+}
+
+private fun buildNearbyLeaderboardItems(rankedProfiles: List<LeaderboardItemData>): List<LeaderboardItemData> {
+    val userIndex = rankedProfiles.indexOfFirst { it.isUser }.coerceAtLeast(0)
+    val endIndex = (userIndex + 2).coerceAtMost(rankedProfiles.size)
+    val startIndex = (endIndex - 3).coerceAtLeast(0)
+
+    return rankedProfiles.subList(startIndex, endIndex)
+}
+
+private fun formatCoins(value: Int): String = "%,d".format(value)
 
 @Composable
 fun LeaderboardRow(item: LeaderboardItemData) {
@@ -327,7 +438,7 @@ fun LeaderboardRow(item: LeaderboardItemData) {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = item.coins,
+                    text = formatCoins(item.coins),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = if (item.isUser) Color.White else TextDark

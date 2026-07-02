@@ -47,6 +47,7 @@ fun EmergencyFundsQuizScreen(
         EmergencyQuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
+            reward = userViewModel.calculateLessonReward(score, totalQuestions),
             onFinish = onDone
         )
     } else {
@@ -71,7 +72,7 @@ fun EmergencyFundsQuizScreen(
 
                             if (isLastQuestion) {
                                 if (!isQuizSaved) {
-                                    userViewModel.completeQuiz("emergency", updatedScore)
+                                    userViewModel.completeQuiz("emergency", updatedScore, totalQuestions)
                                     isQuizSaved = true
                                 }
                                 isQuizFinished = true
@@ -228,6 +229,7 @@ fun EmergencyQuizTopBar(
 fun EmergencyQuizResultsState(
     score: Int,
     totalQuestions: Int,
+    reward: Int,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -262,6 +264,16 @@ fun EmergencyQuizResultsState(
             text = "You scored $score/$totalQuestions!",
             fontSize = 18.sp,
             color = TextGray,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "You earned $reward coins!",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryGreen,
             textAlign = TextAlign.Center
         )
         
@@ -462,6 +474,6 @@ private val emergencyFundQuestions = arrayOf(
 @Composable
 fun EmergencyFundsQuizScreenPreview() {
     FYP_PrototypeTheme {
-        EmergencyQuizResultsState(score = 8, totalQuestions = 10, onFinish = {})
+        EmergencyQuizResultsState(score = 8, totalQuestions = 10, reward = 85, onFinish = {})
     }
 }
