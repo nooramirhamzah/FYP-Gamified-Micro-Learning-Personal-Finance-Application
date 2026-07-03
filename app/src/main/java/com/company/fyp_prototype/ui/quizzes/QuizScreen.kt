@@ -41,6 +41,9 @@ fun QuizScreen(
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var score by remember { mutableIntStateOf(0) }
+    var heartsRemaining by remember { mutableIntStateOf(5) }
+    var hasAnswered by remember { mutableStateOf(false) }
+    var isOutOfHearts by remember { mutableStateOf(false) }
     var isQuizFinished by remember { mutableStateOf(false) }
     var isQuizSaved by remember { mutableStateOf(false) }
 
@@ -49,11 +52,13 @@ fun QuizScreen(
     val safeQuestionIndex = currentQuestionIndex.coerceIn(budgetQuestions.indices)
     val isLastQuestion = safeQuestionIndex == 9
 
-    if (isQuizFinished) {
+    if (isOutOfHearts) {
+        OutOfHeartsState(onReturnToLesson = onBack)
+    } else if (isQuizFinished) {
         QuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
-            reward = userViewModel.calculateLessonReward(score, totalQuestions),
+            reward = if (score >= 5) userViewModel.calculateLessonReward(score, totalQuestions) else 0,
             onFinish = onComplete
         )
     } else {
@@ -68,27 +73,29 @@ fun QuizScreen(
                     progress = progress,
                     coins = coins,
                     currentIndex = safeQuestionIndex + 1,
-                    total = totalQuestions
+                    total = totalQuestions,
+                    heartsRemaining = heartsRemaining
                 )
             },
             bottomBar = {
                 QuizBottomBar(
                     selectedOption = selectedOption,
                     isLastQuestion = isLastQuestion,
+                    hasAnswered = hasAnswered,
+                    isOutOfHearts = heartsRemaining == 0,
                     onNext = {
-                        val answeredCorrectly = selectedOption == currentQuestion.correctOptionIndex
-                        val updatedScore = score + if (answeredCorrectly) 1 else 0
-                        score = updatedScore
-
-                        if (isLastQuestion) {
-                            if (!isQuizSaved) {
-                                userViewModel.completeQuiz(lessonId, updatedScore, totalQuestions)
+                        if (heartsRemaining == 0) {
+                            isOutOfHearts = true
+                        } else if (isLastQuestion) {
+                            if (score >= 5 && !isQuizSaved) {
+                                userViewModel.completeQuiz(lessonId, score, totalQuestions)
                                 isQuizSaved = true
                             }
                             isQuizFinished = true
                         } else {
                             currentQuestionIndex = (safeQuestionIndex + 1).coerceAtMost(9)
                             selectedOption = null
+                            hasAnswered = false
                         }
                     }
                 )
@@ -157,7 +164,17 @@ fun QuizScreen(
                         label = ('A' + index).toString(),
                         text = option,
                         isSelected = selectedOption == index,
-                        onClick = { selectedOption = index }
+                        isCorrect = index == currentQuestion.correctOptionIndex,
+                        isRevealed = hasAnswered,
+                        onClick = {
+                            if (!hasAnswered) {
+                                val answeredCorrectly = index == currentQuestion.correctOptionIndex
+                                selectedOption = index
+                                score += if (answeredCorrectly) 1 else 0
+                                heartsRemaining = if (answeredCorrectly) heartsRemaining else (heartsRemaining - 1).coerceAtLeast(0)
+                                hasAnswered = true
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -173,71 +190,88 @@ fun QuizTopBar(
     coins: Int,
     currentIndex: Int,
     total: Int,
+    heartsRemaining: Int,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Gray)
-        }
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+            }
 
-        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "QUESTION $currentIndex OF $total",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextGray
-            )
-            Spacer(modifier = Modifier.height(4.dp))
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .height(12.dp)
                     .padding(horizontal = 8.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF0F0F0))
+                    .background(Color(0xFFE0E0E0))
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(progress)
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(PrimaryGreen)
                 )
             }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(heartsRemaining.toString(), color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            }
         }
 
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = Color.White,
-            shadowElevation = 2.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF0F0F0))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Text(
+                text = "QUESTION $currentIndex OF $total",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFFFFF9C4),
+                shadowElevation = 0.dp
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFFD700)),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.AccountBalance, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFD700)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = coins.toString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color(0xFFFFA000)
+                    )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = coins.toString(),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = PrimaryGreen
-                )
             }
         }
     }
@@ -247,6 +281,8 @@ fun QuizTopBar(
 fun QuizBottomBar(
     selectedOption: Int?,
     isLastQuestion: Boolean,
+    hasAnswered: Boolean,
+    isOutOfHearts: Boolean,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -274,17 +310,76 @@ fun QuizBottomBar(
                 .weight(1f)
                 .height(64.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedOption != null) PrimaryGreen else Color(0xFFE0E0E0)
+                containerColor = if (hasAnswered) PrimaryGreen else Color(0xFFE0E0E0)
             ),
             shape = RoundedCornerShape(24.dp),
-            enabled = selectedOption != null
+            enabled = hasAnswered
         ) {
             Text(
-                if (isLastQuestion) "FINISH QUIZ" else "NEXT",
+                when {
+                    isOutOfHearts -> "REVIEW LESSON"
+                    isLastQuestion -> "FINISH QUIZ"
+                    else -> "NEXT"
+                },
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (selectedOption != null) Color.White else Color.Gray
             )
+        }
+    }
+}
+
+@Composable
+fun OutOfHeartsState(
+    onReturnToLesson: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(BackgroundWhite)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.Favorite,
+            contentDescription = null,
+            modifier = Modifier.size(96.dp),
+            tint = Color.Red
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Out of Hearts",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextDark,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Read the lesson again, then come back and try the quiz once more.",
+            fontSize = 18.sp,
+            color = TextGray,
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Button(
+            onClick = onReturnToLesson,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Text("Return to Lesson", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -297,6 +392,8 @@ fun QuizResultsState(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val passed = score >= 5
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -323,7 +420,7 @@ fun QuizResultsState(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Quiz Completed!",
+            text = if (passed) "Quiz Completed!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
@@ -341,10 +438,11 @@ fun QuizResultsState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "You earned $reward coins!",
+            text = if (passed) "You earned $reward coins!" else "Score at least 5/10 to unlock the next lesson.",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryGreen
+            color = if (passed) PrimaryGreen else Color.Gray,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -372,20 +470,36 @@ fun QuizOptionCard(
     label: String,
     text: String,
     isSelected: Boolean,
+    isCorrect: Boolean,
+    isRevealed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isWrongSelection = isRevealed && isSelected && !isCorrect
+    val borderColor = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color(0xFFF0F0F0)
+    }
+    val circleColor = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color.Transparent
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isRevealed, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
-            color = if (isSelected) PrimaryGreen else Color(0xFFF0F0F0)
+            color = borderColor
         ),
-        shadowElevation = if (isSelected) 4.dp else 0.dp
+        shadowElevation = if (isSelected || (isRevealed && isCorrect)) 4.dp else 0.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -394,14 +508,14 @@ fun QuizOptionCard(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .border(1.dp, if (isSelected) PrimaryGreen else Color(0xFFF0F0F0), CircleShape)
-                    .background(if (isSelected) PrimaryGreen else Color.Transparent, CircleShape),
+                    .border(1.dp, borderColor, CircleShape)
+                    .background(circleColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = label,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) Color.White else Color.Gray,
+                    color = if (circleColor == Color.Transparent) Color.Gray else Color.White,
                     fontSize = 16.sp
                 )
             }
@@ -417,7 +531,7 @@ fun QuizOptionCard(
             )
 
             RadioButton(
-                selected = isSelected,
+                selected = isSelected || (isRevealed && isCorrect),
                 onClick = onClick,
                 colors = RadioButtonDefaults.colors(
                     selectedColor = PrimaryGreen,

@@ -35,6 +35,9 @@ fun EmergencyFundsQuizScreen(
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var score by remember { mutableIntStateOf(0) }
+    var heartsRemaining by remember { mutableIntStateOf(5) }
+    var hasAnswered by remember { mutableStateOf(false) }
+    var isOutOfHearts by remember { mutableStateOf(false) }
     var isQuizFinished by remember { mutableStateOf(false) }
     var isQuizSaved by remember { mutableStateOf(false) }
 
@@ -43,11 +46,13 @@ fun EmergencyFundsQuizScreen(
     val safeQuestionIndex = currentQuestionIndex.coerceIn(emergencyFundQuestions.indices)
     val isLastQuestion = safeQuestionIndex == 9
 
-    if (isQuizFinished) {
+    if (isOutOfHearts) {
+        OutOfHeartsState(onReturnToLesson = onBack)
+    } else if (isQuizFinished) {
         EmergencyQuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
-            reward = userViewModel.calculateLessonReward(score, totalQuestions),
+            reward = if (score >= 5) userViewModel.calculateLessonReward(score, totalQuestions) else 0,
             onFinish = onDone
         )
     } else {
@@ -59,42 +64,46 @@ fun EmergencyFundsQuizScreen(
                 EmergencyQuizTopBar(
                     onBack = onBack,
                     currentIndex = safeQuestionIndex + 1,
-                    total = totalQuestions
+                    total = totalQuestions,
+                    heartsRemaining = heartsRemaining
                 )
             },
             bottomBar = {
                 Box(modifier = Modifier.padding(24.dp)) {
                     Button(
                         onClick = {
-                            val answeredCorrectly = selectedOption == currentQuestion.correctOptionIndex
-                            val updatedScore = score + if (answeredCorrectly) 1 else 0
-                            score = updatedScore
-
-                            if (isLastQuestion) {
-                                if (!isQuizSaved) {
-                                    userViewModel.completeQuiz("emergency", updatedScore, totalQuestions)
+                            if (heartsRemaining == 0) {
+                                isOutOfHearts = true
+                            } else if (isLastQuestion) {
+                                if (score >= 5 && !isQuizSaved) {
+                                    userViewModel.completeQuiz("emergency", score, totalQuestions)
                                     isQuizSaved = true
                                 }
                                 isQuizFinished = true
                             } else {
                                 currentQuestionIndex = (safeQuestionIndex + 1).coerceAtMost(9)
                                 selectedOption = null
+                                hasAnswered = false
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(64.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selectedOption != null) PrimaryGreen else Color(0xFFE0E0E0)
+                            containerColor = if (hasAnswered) PrimaryGreen else Color(0xFFE0E0E0)
                         ),
                         shape = RoundedCornerShape(24.dp),
-                        enabled = selectedOption != null
+                        enabled = hasAnswered
                     ) {
                         Text(
-                            text = if (isLastQuestion) "Finish Quiz" else "Next Question",
+                            text = when {
+                                heartsRemaining == 0 -> "Review Lesson"
+                                isLastQuestion -> "Finish Quiz"
+                                else -> "Next Question"
+                            },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedOption != null) Color.White else Color.Gray
+                            color = if (hasAnswered) Color.White else Color.Gray
                         )
                     }
                 }
@@ -158,7 +167,17 @@ fun EmergencyFundsQuizScreen(
                                     text = option.text,
                                     icon = option.icon,
                                     isSelected = selectedOption == absoluteIndex,
-                                    onClick = { selectedOption = absoluteIndex },
+                                    isCorrect = absoluteIndex == currentQuestion.correctOptionIndex,
+                                    isRevealed = hasAnswered,
+                                    onClick = {
+                                        if (!hasAnswered) {
+                                            val answeredCorrectly = absoluteIndex == currentQuestion.correctOptionIndex
+                                            selectedOption = absoluteIndex
+                                            score += if (answeredCorrectly) 1 else 0
+                                            heartsRemaining = if (answeredCorrectly) heartsRemaining else (heartsRemaining - 1).coerceAtLeast(0)
+                                            hasAnswered = true
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -178,49 +197,58 @@ fun EmergencyQuizTopBar(
     onBack: () -> Unit,
     currentIndex: Int,
     total: Int,
+    heartsRemaining: Int,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFE0E0E0).copy(alpha = 0.5f))
-        ) {
-            Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
-        }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
-        // Segmented Progress Bar
+    val progress = currentIndex.toFloat() / total.toFloat()
+
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
         Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            repeat(total) { index ->
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(12.dp)
+                    .padding(horizontal = 8.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFE0E0E0))
+            ) {
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(8.dp)
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .fillMaxHeight()
                         .clip(CircleShape)
-                        .background(if (index < currentIndex) PrimaryGreen else Color(0xFFE0E0E0))
+                        .background(PrimaryGreen)
                 )
             }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(heartsRemaining.toString(), color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            }
         }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            "$currentIndex/$total",
+            "QUESTION $currentIndex OF $total",
             color = Color.Gray,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -233,6 +261,8 @@ fun EmergencyQuizResultsState(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val passed = score >= 5
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -251,7 +281,7 @@ fun EmergencyQuizResultsState(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Safety Net Secured!",
+            text = if (passed) "Safety Net Secured!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark,
@@ -270,10 +300,10 @@ fun EmergencyQuizResultsState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "You earned $reward coins!",
+            text = if (passed) "You earned $reward coins!" else "Score at least 5/10 to unlock the next lesson.",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryGreen,
+            color = if (passed) PrimaryGreen else Color.Gray,
             textAlign = TextAlign.Center
         )
         
@@ -299,26 +329,50 @@ fun QuizGridOption(
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isCorrect: Boolean = false
+    isCorrect: Boolean = false,
+    isRevealed: Boolean = false
 ) {
+    val isWrongSelection = isRevealed && isSelected && !isCorrect
+    val borderColor = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color.Transparent
+    }
+    val iconBackground = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color(0xFFF5F5F5)
+    }
+
     Surface(
         modifier = modifier
             .aspectRatio(0.85f)
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isRevealed, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
-            color = if (isSelected) PrimaryGreen else Color.Transparent
+            color = borderColor
         ),
         shadowElevation = 2.dp
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
-            if (isSelected && isCorrect) {
+            if (isRevealed && isCorrect) {
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = null,
                     tint = PrimaryGreen,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(24.dp)
+                )
+            } else if (isWrongSelection) {
+                Icon(
+                    Icons.Default.Cancel,
+                    contentDescription = null,
+                    tint = Color.Red,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(24.dp)
@@ -334,13 +388,13 @@ fun QuizGridOption(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape)
-                        .background(if (isSelected) PrimaryGreen else Color(0xFFF5F5F5)),
+                        .background(iconBackground),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = if (isSelected) Color.White else Color.Gray,
+                        tint = if (isSelected || (isRevealed && isCorrect)) Color.White else Color.Gray,
                         modifier = Modifier.size(32.dp)
                     )
                 }

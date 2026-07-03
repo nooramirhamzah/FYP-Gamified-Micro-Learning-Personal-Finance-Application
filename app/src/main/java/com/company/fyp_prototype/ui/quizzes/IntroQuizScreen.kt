@@ -34,6 +34,9 @@ fun IntroQuizScreen(
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var score by remember { mutableIntStateOf(0) }
+    var heartsRemaining by remember { mutableIntStateOf(5) }
+    var hasAnswered by remember { mutableStateOf(false) }
+    var isOutOfHearts by remember { mutableStateOf(false) }
     var isQuizFinished by remember { mutableStateOf(false) }
     var isQuizSaved by remember { mutableStateOf(false) }
 
@@ -42,11 +45,13 @@ fun IntroQuizScreen(
     val safeQuestionIndex = currentQuestionIndex.coerceIn(introQuestions.indices)
     val isLastQuestion = safeQuestionIndex == 9
 
-    if (isQuizFinished) {
+    if (isOutOfHearts) {
+        OutOfHeartsState(onReturnToLesson = onBack)
+    } else if (isQuizFinished) {
         IntroQuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
-            reward = userViewModel.calculateLessonReward(score, totalQuestions),
+            reward = if (score >= 5) userViewModel.calculateLessonReward(score, totalQuestions) else 0,
             onFinish = onFinish
         )
     } else {
@@ -59,42 +64,46 @@ fun IntroQuizScreen(
                     onBack = onBack,
                     currentIndex = safeQuestionIndex + 1,
                     total = totalQuestions,
-                    coins = coins
+                    coins = coins,
+                    heartsRemaining = heartsRemaining
                 )
             },
             bottomBar = {
                 Box(modifier = Modifier.padding(24.dp)) {
                     Button(
                         onClick = {
-                            val answeredCorrectly = selectedOption == currentQuestion.correctOptionIndex
-                            val updatedScore = score + if (answeredCorrectly) 1 else 0
-                            score = updatedScore
-
-                            if (isLastQuestion) {
-                                if (!isQuizSaved) {
-                                    userViewModel.completeQuiz("intro", updatedScore, totalQuestions)
+                            if (heartsRemaining == 0) {
+                                isOutOfHearts = true
+                            } else if (isLastQuestion) {
+                                if (score >= 5 && !isQuizSaved) {
+                                    userViewModel.completeQuiz("intro", score, totalQuestions)
                                     isQuizSaved = true
                                 }
                                 isQuizFinished = true
                             } else {
                                 currentQuestionIndex = (safeQuestionIndex + 1).coerceAtMost(9)
                                 selectedOption = null
+                                hasAnswered = false
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(64.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selectedOption != null) PrimaryGreen else Color(0xFFE0E0E0)
+                            containerColor = if (hasAnswered) PrimaryGreen else Color(0xFFE0E0E0)
                         ),
                         shape = RoundedCornerShape(24.dp),
-                        enabled = selectedOption != null
+                        enabled = hasAnswered
                     ) {
                         Text(
-                            text = if (isLastQuestion) "Finish Quiz" else "Next Question",
+                            text = when {
+                                heartsRemaining == 0 -> "Review Lesson"
+                                isLastQuestion -> "Finish Quiz"
+                                else -> "Next Question"
+                            },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedOption != null) Color.White else Color.Gray
+                            color = if (hasAnswered) Color.White else Color.Gray
                         )
                     }
                 }
@@ -145,7 +154,17 @@ fun IntroQuizScreen(
                         label = ('A' + index).toString(),
                         text = option,
                         isSelected = selectedOption == index,
-                        onClick = { selectedOption = index }
+                        isCorrect = index == currentQuestion.correctOptionIndex,
+                        isRevealed = hasAnswered,
+                        onClick = {
+                            if (!hasAnswered) {
+                                val answeredCorrectly = index == currentQuestion.correctOptionIndex
+                                selectedOption = index
+                                score += if (answeredCorrectly) 1 else 0
+                                heartsRemaining = if (answeredCorrectly) heartsRemaining else (heartsRemaining - 1).coerceAtLeast(0)
+                                hasAnswered = true
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -160,6 +179,7 @@ fun IntroQuizTopBar(
     currentIndex: Int,
     total: Int,
     coins: Int,
+    heartsRemaining: Int,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
@@ -182,7 +202,7 @@ fun IntroQuizTopBar(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(currentIndex.toFloat() / total)
+                        .fillMaxWidth((currentIndex.toFloat() / total.toFloat()).coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(PrimaryGreen)
@@ -192,7 +212,7 @@ fun IntroQuizTopBar(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("5", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(heartsRemaining.toString(), color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
         }
 
@@ -249,6 +269,8 @@ fun IntroQuizResultsState(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val passed = score >= 5
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -267,7 +289,7 @@ fun IntroQuizResultsState(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Money Basics Complete!",
+            text = if (passed) "Money Basics Complete!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark,
@@ -286,10 +308,10 @@ fun IntroQuizResultsState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "You earned $reward coins!",
+            text = if (passed) "You earned $reward coins!" else "Score at least 5/10 to unlock the next lesson.",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryGreen,
+            color = if (passed) PrimaryGreen else Color.Gray,
             textAlign = TextAlign.Center
         )
 
@@ -313,20 +335,36 @@ fun QuizOptionItem(
     label: String,
     text: String,
     isSelected: Boolean,
+    isCorrect: Boolean,
+    isRevealed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isWrongSelection = isRevealed && isSelected && !isCorrect
+    val borderColor = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color(0xFFEEEEEE)
+    }
+    val circleColor = when {
+        isRevealed && isCorrect -> PrimaryGreen
+        isWrongSelection -> Color.Red
+        isSelected -> PrimaryGreen
+        else -> Color.Transparent
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isRevealed, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
-            color = if (isSelected) PrimaryGreen else Color(0xFFEEEEEE)
+            color = borderColor
         ),
-        shadowElevation = if (isSelected) 2.dp else 0.dp
+        shadowElevation = if (isSelected || (isRevealed && isCorrect)) 2.dp else 0.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -336,14 +374,14 @@ fun QuizOptionItem(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (isSelected) PrimaryGreen else Color.Transparent)
-                    .border(1.dp, if (isSelected) PrimaryGreen else Color(0xFFEEEEEE), CircleShape),
+                    .background(circleColor)
+                    .border(1.dp, borderColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = label,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) Color.White else Color.Gray,
+                    color = if (circleColor == Color.Transparent) Color.Gray else Color.White,
                     fontSize = 16.sp
                 )
             }
@@ -359,7 +397,7 @@ fun QuizOptionItem(
             )
 
             RadioButton(
-                selected = isSelected,
+                selected = isSelected || (isRevealed && isCorrect),
                 onClick = onClick,
                 colors = RadioButtonDefaults.colors(
                     selectedColor = PrimaryGreen,
