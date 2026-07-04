@@ -66,7 +66,7 @@ fun BudgetLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                             Icon(Icons.Default.Close, contentDescription = "Close")
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
                 )
                 LinearProgressIndicator(
                     progress = { lessonProgress },
@@ -102,7 +102,7 @@ fun BudgetLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                 }
             }
         },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -194,7 +194,7 @@ fun BudgetIntroCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -219,12 +219,12 @@ fun BudgetIntroCard() {
                         "Budgeting made simple",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "A quick rule for deciding where your income should go.",
                         fontSize = 13.sp,
-                        color = TextGray,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         lineHeight = 18.sp
                     )
                 }
@@ -243,7 +243,7 @@ fun BudgetIntroCard() {
                     append(" so you can enjoy today while still preparing for tomorrow.")
                 },
                 fontSize = 14.sp,
-                color = TextDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 22.sp
             )
         }
@@ -300,7 +300,7 @@ fun BudgetLearningGoalsCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, Color(0xFFECEFF3))
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -326,7 +326,7 @@ fun BudgetSectionTitle(label: String, title: String) {
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             title,
-            color = TextDark,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
             lineHeight = 23.sp
@@ -351,7 +351,7 @@ fun BudgetBulletPoint(text: String) {
                 .background(PrimaryGreen)
         )
         Spacer(modifier = Modifier.width(10.dp))
-        Text(text, color = TextGray, fontSize = 14.sp, lineHeight = 20.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp, lineHeight = 20.sp)
     }
 }
 
@@ -367,7 +367,7 @@ fun BudgetCategoryItem(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = if (isGoal) BorderStroke(2.dp, PrimaryGreen) else BorderStroke(1.dp, Color(0xFFECEFF3)),
         shadowElevation = if (isGoal) 4.dp else 0.dp
     ) {
@@ -387,9 +387,9 @@ fun BudgetCategoryItem(
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextDark)
+                    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(subtitle, color = TextGray, fontSize = 12.sp, lineHeight = 16.sp)
+                    Text(subtitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp, lineHeight = 16.sp)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -429,7 +429,7 @@ fun BudgetCalculatorCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 6.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -515,7 +515,7 @@ fun BudgetExampleCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, Color(0xFFECEFF3))
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -600,7 +600,7 @@ fun BudgetMistakesCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, Color(0xFFECEFF3))
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -639,7 +639,7 @@ fun BudgetActionPlanCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, Color(0xFFECEFF3))
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -709,7 +709,7 @@ fun BudgetFinBotMessage() {
             Spacer(modifier = Modifier.height(4.dp))
             Surface(
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomEnd = 24.dp, bottomStart = 4.dp),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, Color(0xFFF0F0F0))
             ) {
                 Text(

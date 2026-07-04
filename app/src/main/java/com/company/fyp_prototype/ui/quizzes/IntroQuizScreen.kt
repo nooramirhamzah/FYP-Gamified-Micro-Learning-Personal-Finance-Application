@@ -58,7 +58,7 @@ fun IntroQuizScreen(
         val currentQuestion = introQuestions[safeQuestionIndex]
 
         Scaffold(
-            containerColor = BackgroundWhite,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 IntroQuizTopBar(
                     onBack = onBack,
@@ -112,7 +112,7 @@ fun IntroQuizScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(BackgroundWhite)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
@@ -141,7 +141,7 @@ fun IntroQuizScreen(
                     text = currentQuestion.text,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextDark,
+                        color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Center
                     ),
                     lineHeight = 32.sp
@@ -189,7 +189,7 @@ fun IntroQuizTopBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onBackground)
             }
 
             Box(
@@ -225,7 +225,7 @@ fun IntroQuizTopBar(
         ) {
             Text(
                 "QUESTION $currentIndex OF $total",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
@@ -274,7 +274,7 @@ fun IntroQuizResultsState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -292,7 +292,7 @@ fun IntroQuizResultsState(
             text = if (passed) "Money Basics Complete!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = TextDark,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
@@ -301,7 +301,7 @@ fun IntroQuizResultsState(
         Text(
             text = "You scored $score/$totalQuestions!",
             fontSize = 18.sp,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
 
@@ -359,7 +359,7 @@ fun QuizOptionItem(
             .fillMaxWidth()
             .clickable(enabled = !isRevealed, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
             color = borderColor
@@ -393,7 +393,7 @@ fun QuizOptionItem(
                 modifier = Modifier.weight(1f),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             RadioButton(

@@ -58,7 +58,7 @@ fun HighYieldQuizScreen(
         val currentQuestion = highYieldQuestions[safeQuestionIndex]
 
         Scaffold(
-            containerColor = BackgroundWhite,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 HighYieldQuizTopBar(
                     onBack = onBack,
@@ -111,7 +111,7 @@ fun HighYieldQuizScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(BackgroundWhite)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
@@ -148,7 +148,7 @@ fun HighYieldQuizScreen(
                     text = currentQuestion.text,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextDark,
+                        color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Start
                     ),
                     lineHeight = 32.sp
@@ -207,7 +207,7 @@ fun HighYieldQuizTopBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onBackground)
             }
 
             Box(
@@ -243,7 +243,7 @@ fun HighYieldQuizTopBar(
 
         Text(
             "QUESTION $currentIndex OF $total",
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f),
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
             modifier = Modifier.fillMaxWidth()
@@ -264,7 +264,7 @@ fun HighYieldQuizResultsState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -282,7 +282,7 @@ fun HighYieldQuizResultsState(
             text = if (passed) "Savings Growth Unlocked!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = TextDark,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
@@ -291,7 +291,7 @@ fun HighYieldQuizResultsState(
         Text(
             text = "You scored $score/$totalQuestions!",
             fontSize = 18.sp,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
 

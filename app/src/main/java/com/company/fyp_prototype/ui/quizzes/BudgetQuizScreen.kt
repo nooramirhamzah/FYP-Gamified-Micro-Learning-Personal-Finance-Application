@@ -32,7 +32,7 @@ data class Question(
 )
 
 @Composable
-fun QuizScreen(
+fun BudgetQuizScreen(
     userViewModel: UserViewModel,
     lessonId: String = "budget",
     onBack: () -> Unit = {},
@@ -66,7 +66,7 @@ fun QuizScreen(
         val progress = (safeQuestionIndex + 1).toFloat() / totalQuestions
 
         Scaffold(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 QuizTopBar(
                     onBack = onBack,
@@ -79,7 +79,6 @@ fun QuizScreen(
             },
             bottomBar = {
                 QuizBottomBar(
-                    selectedOption = selectedOption,
                     isLastQuestion = isLastQuestion,
                     hasAnswered = hasAnswered,
                     isOutOfHearts = heartsRemaining == 0,
@@ -104,7 +103,7 @@ fun QuizScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
@@ -135,7 +134,7 @@ fun QuizScreen(
 
                     Surface(
                         shape = RoundedCornerShape(topStart = 4.dp, topEnd = 24.dp, bottomEnd = 24.dp, bottomStart = 24.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF0F0F0)),
                         modifier = Modifier.weight(1f)
                     ) {
@@ -144,7 +143,7 @@ fun QuizScreen(
                             modifier = Modifier.padding(16.dp),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextDark
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -153,7 +152,7 @@ fun QuizScreen(
 
                 Text(
                     "Select the correct answer:",
-                    color = TextGray,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     fontSize = 16.sp
                 )
 
@@ -200,7 +199,7 @@ fun QuizTopBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextDark)
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onBackground)
             }
 
             Box(
@@ -243,7 +242,7 @@ fun QuizTopBar(
                 text = "QUESTION $currentIndex OF $total",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f)
             )
 
             Surface(
@@ -279,35 +278,22 @@ fun QuizTopBar(
 
 @Composable
 fun QuizBottomBar(
-    selectedOption: Int?,
     isLastQuestion: Boolean,
     hasAnswered: Boolean,
     isOutOfHearts: Boolean,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(24.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFE8EAF6)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Lightbulb, contentDescription = "Hint", tint = Color.Gray)
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
         Button(
             onClick = onNext,
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()
                 .height(64.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (hasAnswered) PrimaryGreen else Color(0xFFE0E0E0)
@@ -323,7 +309,7 @@ fun QuizBottomBar(
                 },
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (selectedOption != null) Color.White else Color.Gray
+                color = if (hasAnswered) Color.White else Color.Gray
             )
         }
     }
@@ -337,7 +323,7 @@ fun OutOfHeartsState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -355,7 +341,7 @@ fun OutOfHeartsState(
             text = "Out of Hearts",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = TextDark,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
@@ -364,7 +350,7 @@ fun OutOfHeartsState(
         Text(
             text = "Read the lesson again, then come back and try the quiz once more.",
             fontSize = 18.sp,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
             lineHeight = 26.sp
         )
@@ -397,7 +383,7 @@ fun QuizResultsState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -423,7 +409,7 @@ fun QuizResultsState(
             text = if (passed) "Quiz Completed!" else "Try Again",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = TextDark
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -431,7 +417,7 @@ fun QuizResultsState(
         Text(
             text = "You scored $score/$totalQuestions!",
             fontSize = 20.sp,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
 
@@ -494,7 +480,7 @@ fun QuizOptionCard(
             .fillMaxWidth()
             .clickable(enabled = !isRevealed, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
             color = borderColor
@@ -527,7 +513,7 @@ fun QuizOptionCard(
                 modifier = Modifier.weight(1f),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             RadioButton(
@@ -557,7 +543,7 @@ private val budgetQuestions = arrayOf(
 
 @Preview(showBackground = true)
 @Composable
-fun QuizScreenPreview() {
+fun BudgetQuizScreenPreview() {
     FYP_PrototypeTheme {
         QuizResultsState(score = 8, totalQuestions = 10, reward = 85, onFinish = {})
     }

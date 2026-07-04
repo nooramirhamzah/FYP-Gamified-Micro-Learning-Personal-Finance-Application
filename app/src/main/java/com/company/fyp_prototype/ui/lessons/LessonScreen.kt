@@ -53,7 +53,7 @@ fun LessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                             "LESSON: INTRO TO MONEY",
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = TextDark,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 letterSpacing = 1.sp
                             )
                         )
@@ -64,7 +64,7 @@ fun LessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
                 LinearProgressIndicator(
@@ -113,7 +113,7 @@ fun LessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                 }
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -224,7 +224,7 @@ fun LessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Lesson: time is a financial advantage. Even small early habits can become meaningful later.",
-                    color = TextDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     lineHeight = 20.sp
@@ -276,7 +276,7 @@ fun LessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit = {}) {
                 Text(
                     text = "Most of the growth happens near the end. That is why starting early is your superpower!",
                     fontSize = 13.sp,
-                    color = TextGray,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     lineHeight = 18.sp
                 )
             }
@@ -301,7 +301,7 @@ private fun MoneyGuideImage() {
                 .padding(top = 18.dp, end = 18.dp)
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color.White),
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -316,7 +316,7 @@ private fun MoneyGuideImage() {
             modifier = Modifier
                 .size(width = 124.dp, height = 76.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color.White),
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -397,14 +397,14 @@ private fun LessonSectionTitle(title: String, subtitle: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = title,
-            color = TextDark,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = subtitle,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             fontSize = 14.sp,
             lineHeight = 20.sp
         )
@@ -429,13 +429,13 @@ private fun LessonContentCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = title,
-                color = TextDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -471,14 +471,14 @@ private fun ConceptRow(number: String, title: String, description: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = TextDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = description,
-                color = TextGray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
@@ -512,7 +512,7 @@ private fun ActionStep(step: String, text: String) {
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             fontSize = 14.sp,
             lineHeight = 20.sp,
             modifier = Modifier.weight(1f)
@@ -539,10 +539,16 @@ private fun HighlightText(text: androidx.compose.ui.text.AnnotatedString) {
 
 @Composable
 private fun ExampleBox(title: String, description: String) {
+    val exampleBackground = if (MaterialTheme.colorScheme.background == DarkBackground) {
+        Color(0xFFEAF0F7)
+    } else {
+        Color(0xFFF8F8F8)
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = Color(0xFFF8F8F8)
+        color = exampleBackground
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -578,14 +584,16 @@ private fun TwoColumnComparison(
             description = leftText,
             modifier = Modifier.weight(1f),
             backgroundColor = Color(0xFFF5F5F5),
-            titleColor = TextDark
+            titleColor = TextDark,
+            bodyColor = TextGray
         )
         ComparisonBox(
             title = rightTitle,
             description = rightText,
             modifier = Modifier.weight(1f),
-            backgroundColor = ChartLightGreen.copy(alpha = 0.28f),
-            titleColor = ChartGreen
+            backgroundColor = ChartLightGreen.copy(alpha = 0.42f),
+            titleColor = DarkGreen,
+            bodyColor = TextDark
         )
     }
 }
@@ -596,7 +604,8 @@ private fun ComparisonBox(
     description: String,
     modifier: Modifier = Modifier,
     backgroundColor: Color,
-    titleColor: Color
+    titleColor: Color,
+    bodyColor: Color
 ) {
     Surface(
         modifier = modifier,
@@ -614,7 +623,7 @@ private fun ComparisonBox(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = description,
-                color = TextGray,
+                color = bodyColor,
                 fontSize = 12.sp,
                 lineHeight = 17.sp
             )
@@ -654,7 +663,7 @@ private fun FormulaCard() {
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = "You do not need to memorize the formula for the quiz. Focus on the idea: money can earn more money when it is given enough time.",
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             fontSize = 13.sp,
             lineHeight = 19.sp
         )
@@ -726,7 +735,7 @@ fun InteractiveDemoCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -739,7 +748,7 @@ fun InteractiveDemoCard() {
                     Text(
                         "INTERACTIVE DEMO",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = TextGray,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             letterSpacing = 1.sp
                         )
                     )
@@ -748,7 +757,7 @@ fun InteractiveDemoCard() {
                         "Watch your money grow",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextDark
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -888,7 +897,7 @@ fun InteractiveDemoCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("1 year", color = TextGray, fontSize = 12.sp)
+                Text("1 year", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
                 Surface(
                     color = PrimaryGreen.copy(alpha = 0.14f),
                     shape = RoundedCornerShape(50)
@@ -901,7 +910,7 @@ fun InteractiveDemoCard() {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Text("30 years", color = TextGray, fontSize = 12.sp)
+                Text("30 years", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.height(8.dp))

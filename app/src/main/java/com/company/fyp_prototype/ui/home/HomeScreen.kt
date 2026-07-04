@@ -57,7 +57,7 @@ private fun HomeContent(
 ) {
     Scaffold(
         bottomBar = { BottomNavigationBar(onNavigate) },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -75,7 +75,7 @@ private fun HomeContent(
                     text = "Your Quest",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -189,7 +189,7 @@ fun TopHeader(coins: Int, nickname: String, avatarEmoji: String) {
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(LockedGray),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = avatarEmoji, fontSize = 24.sp)
@@ -199,7 +199,7 @@ fun TopHeader(coins: Int, nickname: String, avatarEmoji: String) {
 
             Text(
                 text = "Hi, $displayName",
-                color = TextDark,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -208,7 +208,7 @@ fun TopHeader(coins: Int, nickname: String, avatarEmoji: String) {
         // XP Points
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 2.dp
         ) {
             Row(
@@ -229,7 +229,7 @@ fun TopHeader(coins: Int, nickname: String, avatarEmoji: String) {
                     text = coins.toString(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -253,7 +253,7 @@ fun ProgressCard(completedLessons: List<String>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -266,8 +266,8 @@ fun ProgressCard(completedLessons: List<String>) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Level Progress", color = TextGray, fontSize = 14.sp)
-                Text(progressText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("Level Progress", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp)
+                Text(progressText, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -277,12 +277,12 @@ fun ProgressCard(completedLessons: List<String>) {
                     .height(12.dp)
                     .clip(CircleShape),
                 color = PrimaryGreen,
-                trackColor = Color(0xFFF0F0F0)
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = helperText,
-                color = Color(0xFF9E9E9E),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
                 fontSize = 12.sp
             )
         }
@@ -374,7 +374,7 @@ fun QuestItem(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (status == QuestStatus.LOCKED) Color.LightGray else TextDark,
+                        color = if (status == QuestStatus.LOCKED) Color.LightGray else MaterialTheme.colorScheme.onBackground,
                         textDecoration = if (status == QuestStatus.COMPLETED) TextDecoration.LineThrough else null
                     )
                 )
@@ -417,7 +417,7 @@ fun CurrentLessonCard(
             .clickable(enabled = isUnlocked, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isUnlocked) Color.White else LockedGray.copy(alpha = 0.4f)
+            containerColor = if (isUnlocked) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -429,7 +429,10 @@ fun CurrentLessonCard(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
+                    ),
                     modifier = Modifier.weight(1f)
                 )
                 Surface(
@@ -448,7 +451,7 @@ fun CurrentLessonCard(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = description,
-                color = TextGray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -472,7 +475,7 @@ fun CurrentLessonCard(
 @Composable
 fun BottomNavigationBar(onNavigate: (String) -> Unit = {}) {
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         val items = listOf(
@@ -500,13 +503,13 @@ fun BottomNavigationBar(onNavigate: (String) -> Unit = {}) {
                             )
                         }
                     } else {
-                        Icon(icon, contentDescription = label, tint = TextGray)
+                        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f))
                     }
                 },
                 label = {
                     Text(
                         label,
-                        color = if (selected) PrimaryGreen else TextGray,
+                        color = if (selected) PrimaryGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                         fontSize = 12.sp
                     )

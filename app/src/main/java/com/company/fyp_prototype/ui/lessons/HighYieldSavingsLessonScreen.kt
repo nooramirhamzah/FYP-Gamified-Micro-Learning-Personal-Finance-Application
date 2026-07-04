@@ -59,7 +59,7 @@ fun HighYieldSavingsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
                 )
                 LinearProgressIndicator(
                     progress = { lessonProgress },
@@ -91,7 +91,7 @@ fun HighYieldSavingsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit
                 }
             }
         },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -228,7 +228,7 @@ private fun HighYieldDefinitionCard() {
     ) {
         Text(
             text = "A high-yield savings account is a savings account that offers a higher annual return than a traditional savings account. It is useful for money you want to keep safe and accessible, such as an emergency fund or short-term goal savings.",
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             fontSize = 14.sp,
             lineHeight = 21.sp
         )
@@ -275,7 +275,7 @@ private fun HighYieldInteractiveComparisonCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -283,14 +283,14 @@ private fun HighYieldInteractiveComparisonCard() {
                 Icon(Icons.Default.TrendingUp, contentDescription = null, tint = PrimaryGreen)
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    Text("Interactive comparison", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextDark)
-                    Text("Rates shown are educational examples.", color = TextGray, fontSize = 12.sp)
+                    Text("Interactive comparison", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Rates shown are educational examples.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text("Starting savings amount", color = TextGray, fontSize = 13.sp)
+            Text("Starting savings amount", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -426,7 +426,7 @@ private fun HighYieldAccountComparisonBox(
         Text(rate, color = if (isHighlighted) PrimaryGreen else Color.Gray, fontSize = 12.sp, fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal)
         Spacer(modifier = Modifier.height(8.dp))
         Surface(
-            color = if (isHighlighted) PrimaryGreen else Color.White,
+            color = if (isHighlighted) PrimaryGreen else MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(10.dp)
         ) {
             Text(
@@ -583,7 +583,7 @@ private fun HighYieldSectionCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp,
         border = BorderStroke(1.dp, Color(0xFFF0F0F0))
     ) {
@@ -651,7 +651,7 @@ private fun HighYieldBullet(text: String) {
                 .background(PrimaryGreen)
         )
         Spacer(modifier = Modifier.width(10.dp))
-        Text(text, color = TextGray, fontSize = 14.sp, lineHeight = 20.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp, lineHeight = 20.sp)
     }
 }
 
@@ -676,7 +676,7 @@ private fun HighYieldTermRow(term: String, meaning: String) {
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(meaning, color = TextGray, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
+        Text(meaning, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
     }
 }
 
@@ -728,7 +728,7 @@ private fun HighYieldNumberedStep(number: Int, text: String) {
             Text(number.toString(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text, color = TextGray, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
+        Text(text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
     }
 }
 

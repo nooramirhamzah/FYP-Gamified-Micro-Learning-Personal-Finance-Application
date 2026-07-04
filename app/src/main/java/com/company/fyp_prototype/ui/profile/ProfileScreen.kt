@@ -42,7 +42,26 @@ fun ProfileScreen(
     val avatarEmoji by userViewModel.avatarEmoji.collectAsState()
     val coins by userViewModel.coins.collectAsState()
     val completedLessons by userViewModel.completedLessons.collectAsState()
+    val activeRewards by userViewModel.activeRewards.collectAsState()
     val displayName = nickname.ifBlank { "Learner" }
+    val hasGoldenFrame = "golden_saver_frame" in activeRewards
+    val hasBudgetHeroTitle = "budget_hero_title" in activeRewards
+    val hasEmergencyReadyTitle = "emergency_ready_title" in activeRewards
+    val profileTitle = when {
+        hasEmergencyReadyTitle -> "Emergency Ready"
+        hasBudgetHeroTitle -> "Budget Hero"
+        else -> "Financial Literacy Enthusiast"
+    }
+    val profileTitleIcon = when {
+        hasEmergencyReadyTitle -> Icons.Default.Shield
+        hasBudgetHeroTitle -> Icons.Default.PieChart
+        else -> Icons.Default.Stars
+    }
+    val profileTitleColor = when {
+        hasEmergencyReadyTitle -> Color(0xFF00C853)
+        hasBudgetHeroTitle -> LessonDarkBlue
+        else -> PrimaryGreen
+    }
     val fullLeaderboardItems = buildRankedLeaderboard(displayName, coins)
     val leaderboardItems = buildNearbyLeaderboardItems(fullLeaderboardItems)
     var showFullLeaderboard by remember { mutableStateOf(false) }
@@ -73,11 +92,11 @@ fun ProfileScreen(
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         bottomBar = { ProfileBottomNavigationBar(onNavigate) },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -94,16 +113,41 @@ fun ProfileScreen(
                     Box(
                         modifier = Modifier
                             .size(120.dp)
-                            .border(4.dp, PrimaryGreen, CircleShape)
+                            .border(
+                                width = if (hasGoldenFrame) 6.dp else 4.dp,
+                                color = if (hasGoldenFrame) Color(0xFFFFC107) else PrimaryGreen,
+                                shape = CircleShape
+                            )
                             .padding(8.dp)
                             .clip(CircleShape)
-                            .background(LockedGray),
+                            .background(
+                                if (hasGoldenFrame) Color(0xFFFFF8E1)
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = avatarEmoji,
                             fontSize = 58.sp
                         )
+                    }
+                    if (hasGoldenFrame) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFFC107))
+                                .border(2.dp, Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.WorkspacePremium,
+                                contentDescription = "Golden frame active",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -127,20 +171,31 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     displayName,
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Default.Stars,
+                        profileTitleIcon,
                         contentDescription = null,
-                        tint = PrimaryGreen,
+                        tint = profileTitleColor,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        "Financial Literacy Enthusiast",
-                        color = TextGray,
+                        profileTitle,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                         fontSize = 14.sp
+                    )
+                }
+                if (hasGoldenFrame || hasBudgetHeroTitle || hasEmergencyReadyTitle) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ActiveRewardEffectsRow(
+                        hasGoldenFrame = hasGoldenFrame,
+                        hasBudgetHeroTitle = hasBudgetHeroTitle,
+                        hasEmergencyReadyTitle = hasEmergencyReadyTitle
                     )
                 }
             }
@@ -214,11 +269,78 @@ fun ProfileScreen(
 }
 
 @Composable
+private fun ActiveRewardEffectsRow(
+    hasGoldenFrame: Boolean,
+    hasBudgetHeroTitle: Boolean,
+    hasEmergencyReadyTitle: Boolean
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (hasGoldenFrame) {
+            RewardEffectChip(
+                icon = Icons.Default.WorkspacePremium,
+                text = "Golden frame active",
+                color = Color(0xFFFFC107)
+            )
+        }
+        if (hasBudgetHeroTitle) {
+            RewardEffectChip(
+                icon = Icons.Default.PieChart,
+                text = "Budget Hero title active",
+                color = LessonDarkBlue
+            )
+        }
+        if (hasEmergencyReadyTitle) {
+            RewardEffectChip(
+                icon = Icons.Default.Shield,
+                text = "Emergency Ready title active",
+                color = Color(0xFF00C853)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RewardEffectChip(
+    icon: ImageVector,
+    text: String,
+    color: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = color.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = text,
+                color = color,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
 fun DemoResetSection(onReset: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -228,12 +350,12 @@ fun DemoResetSection(onReset: () -> Unit) {
             Text(
                 text = "Evaluator Tools",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = TextDark
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Reset progress, coins, and badges for a fresh onboarding demo.",
-                color = TextGray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 fontSize = 13.sp
             )
             Spacer(modifier = Modifier.height(14.dp))
@@ -280,11 +402,11 @@ fun FullLeaderboardScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         bottomBar = { ProfileBottomNavigationBar(onNavigate) },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -299,13 +421,13 @@ fun FullLeaderboardScreen(
                     text = "Local demo ranking",
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Your row uses your saved Room profile and coin total. Other learners are simulated peers for presentation.",
                     modifier = Modifier.fillMaxWidth(),
-                    color = TextGray,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(18.dp))
@@ -326,7 +448,7 @@ fun StatCard(icon: ImageVector, value: String, label: String, modifier: Modifier
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -335,10 +457,15 @@ fun StatCard(icon: ImageVector, value: String, label: String, modifier: Modifier
         ) {
             Icon(icon, contentDescription = null, tint = PrimaryGreen, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(value, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(
+                value,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
             Text(
                 label,
-                color = Color.LightGray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -388,7 +515,7 @@ fun LeaderboardRow(item: LeaderboardItemData) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = if (item.isUser) PrimaryGreen else Color.White,
+        color = if (item.isUser) PrimaryGreen else MaterialTheme.colorScheme.surface,
         shadowElevation = if (item.isUser) 4.dp else 0.dp
     ) {
         Row(
@@ -407,7 +534,7 @@ fun LeaderboardRow(item: LeaderboardItemData) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (item.isUser) Color.White.copy(alpha = 0.3f) else LockedGray)
+                    .background(if (item.isUser) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant)
                     .border(1.dp, if (item.isUser) Color.White else PrimaryGreen, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -425,7 +552,7 @@ fun LeaderboardRow(item: LeaderboardItemData) {
                 text = item.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = if (item.isUser) Color.White else TextDark,
+                color = if (item.isUser) Color.White else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             
@@ -441,13 +568,13 @@ fun LeaderboardRow(item: LeaderboardItemData) {
                     text = formatCoins(item.coins),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = if (item.isUser) Color.White else TextDark
+                    color = if (item.isUser) Color.White else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Coins",
                     fontSize = 12.sp,
-                    color = if (item.isUser) Color.White.copy(alpha = 0.8f) else Color.Gray
+                    color = if (item.isUser) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
             }
         }
@@ -457,12 +584,12 @@ fun LeaderboardRow(item: LeaderboardItemData) {
 @Composable
 fun ProfileBottomNavigationBar(onNavigate: (String) -> Unit) {
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         val items = listOf(
             Triple("Learn", Icons.Default.School, "home"),
-            Triple("Shop", Icons.Default.ShoppingCart, "portfolio"),
+            Triple("Portfolio", Icons.Default.PieChart, "portfolio"),
             Triple("Profile", Icons.Default.Person, "profile")
         )
 
@@ -485,13 +612,13 @@ fun ProfileBottomNavigationBar(onNavigate: (String) -> Unit) {
                             )
                         }
                     } else {
-                        Icon(icon, contentDescription = label, tint = TextGray)
+                        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f))
                     }
                 },
                 label = {
                     Text(
                         label,
-                        color = if (selected) PrimaryGreen else TextGray,
+                        color = if (selected) PrimaryGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                         fontSize = 12.sp
                     )

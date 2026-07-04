@@ -26,6 +26,14 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         it?.earnedBadges?.split(",")?.filter { name -> name.isNotEmpty() } ?: emptyList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val purchasedRewards: StateFlow<Set<String>> = _userProgress.map {
+        it?.purchasedRewards?.toMutableCsvSet()?.toSet() ?: emptySet()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val activeRewards: StateFlow<Set<String>> = _userProgress.map {
+        it?.activeRewards?.toMutableCsvSet()?.toSet() ?: emptySet()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     val nickname: StateFlow<String> = _userProgress.map { it?.nickname.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
 
@@ -127,6 +135,8 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
                     coins = 0,
                     completedLessons = "",
                     earnedBadges = "",
+                    purchasedRewards = "",
+                    activeRewards = "",
                     nickname = "",
                     avatarEmoji = "🙂",
                     hasCompletedOnboarding = false
@@ -146,6 +156,10 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
             badgeNames.add("Thrifty Saver")
         }
 
+        progress.completedLessons.toMutableCsvSet().forEach { lessonId ->
+            quizMasterBadgeFor(lessonId)?.let { badgeNames.add(it) }
+        }
+
         if (quizScore != null && quizScore >= 8 && completedQuizLessonId != null) {
             quizMasterBadgeFor(completedQuizLessonId)?.let { badgeNames.add(it) }
         }
@@ -161,17 +175,57 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         else -> null
     }
 
-    fun buyItem(price: Int, itemName: String): Boolean {
-        val currentCoins = coins.value
-        if (currentCoins >= price) {
-            viewModelScope.launch {
-                val currentProgress = _userProgress.value ?: UserProgressEntity()
-                userDao.insertOrUpdate(currentProgress.copy(coins = currentCoins - price))
-                // Optionally add to badges or owned items if needed
-            }
-            return true
+    fun buyReward(rewardId: String, cost: Int): Boolean {
+        val currentProgress = _userProgress.value ?: UserProgressEntity()
+        val ownedRewards = currentProgress.purchasedRewards.toMutableCsvSet()
+        val activeRewards = currentProgress.activeRewards.toMutableCsvSet()
+
+        if (rewardId in ownedRewards || currentProgress.coins < cost) {
+            return false
         }
-        return false
+
+        ownedRewards.add(rewardId)
+        activeRewards.add(rewardId)
+        viewModelScope.launch {
+            userDao.insertOrUpdate(
+                currentProgress.copy(
+                    coins = currentProgress.coins - cost,
+                    purchasedRewards = ownedRewards.toCsvString(),
+                    activeRewards = activeRewards.toCsvString()
+                )
+            )
+        }
+        return true
+    }
+
+    fun setRewardActive(rewardId: String, isActive: Boolean) {
+        viewModelScope.launch {
+            val currentProgress = _userProgress.value ?: UserProgressEntity()
+            val ownedRewards = currentProgress.purchasedRewards.toMutableCsvSet()
+
+            if (rewardId !in ownedRewards) return@launch
+
+            val activeRewardIds = currentProgress.activeRewards.toMutableCsvSet()
+            if (isActive) {
+                activeRewardIds.add(rewardId)
+            } else {
+                activeRewardIds.remove(rewardId)
+            }
+
+            userDao.insertOrUpdate(currentProgress.copy(activeRewards = activeRewardIds.toCsvString()))
+        }
+    }
+
+    fun hasPurchasedReward(rewardId: String): Boolean {
+        return rewardId in getPurchasedRewards()
+    }
+
+    fun getPurchasedRewards(): Set<String> {
+        return (_userProgress.value ?: UserProgressEntity()).purchasedRewards.toMutableCsvSet()
+    }
+
+    fun buyItem(price: Int, itemName: String): Boolean {
+        return buyReward(itemName, price)
     }
     
     // Initial data setup if empty

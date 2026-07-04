@@ -19,12 +19,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.company.fyp_prototype.ui.theme.BackgroundWhite
 import com.company.fyp_prototype.ui.theme.FYP_PrototypeTheme
 import com.company.fyp_prototype.ui.theme.LockedGray
 import com.company.fyp_prototype.ui.theme.PrimaryGreen
-import com.company.fyp_prototype.ui.theme.TextDark
-import com.company.fyp_prototype.ui.theme.TextGray
 import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 
 @Composable
@@ -65,7 +62,7 @@ private fun OnboardingContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -74,7 +71,7 @@ private fun OnboardingContent(
             text = "Create Your Profile",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
-                color = TextDark,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
         )
@@ -83,7 +80,7 @@ private fun OnboardingContent(
 
         Text(
             text = "Choose a name and avatar for your financial learning journey.",
-            color = TextGray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
             fontSize = 15.sp,
             textAlign = TextAlign.Center
         )
@@ -105,7 +102,7 @@ private fun OnboardingContent(
             text = "Pick an avatar",
             modifier = Modifier.fillMaxWidth(),
             fontWeight = FontWeight.Bold,
-            color = TextDark
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -152,7 +149,7 @@ private fun AvatarChoice(
         modifier = Modifier
             .size(58.dp)
             .clip(CircleShape)
-            .background(if (isSelected) PrimaryGreen.copy(alpha = 0.14f) else Color.White)
+            .background(if (isSelected) PrimaryGreen.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface)
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
                 color = if (isSelected) PrimaryGreen else LockedGray,

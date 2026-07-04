@@ -9,6 +9,8 @@ data class UserProgressEntity(
     val coins: Int = 0,
     val completedLessons: String = "", // Comma separated IDs: "budget,emergency"
     val earnedBadges: String = "", // Comma separated names
+    val purchasedRewards: String = "", // Comma separated reward IDs
+    val activeRewards: String = "", // Comma separated reward IDs currently enabled
     val nickname: String = "",
     val avatarEmoji: String = "🙂",
     val hasCompletedOnboarding: Boolean = false

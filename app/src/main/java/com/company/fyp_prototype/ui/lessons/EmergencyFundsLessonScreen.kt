@@ -57,7 +57,7 @@ fun EmergencyFundsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit =
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
                 )
                 LinearProgressIndicator(
                     progress = { lessonProgress },
@@ -89,7 +89,7 @@ fun EmergencyFundsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit =
                 }
             }
         },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -128,14 +128,14 @@ fun EmergencyFundsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit =
             ) {
                 Text(
                     text = "An emergency fund is money kept aside for unexpected but necessary situations. It stops one problem, such as a broken laptop or sudden medical bill, from becoming a bigger financial crisis.",
-                    color = TextDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
                     lineHeight = 21.sp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "It is not investment money, shopping money, or vacation money. It is your financial backup plan.",
-                    color = TextGray,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     fontSize = 14.sp,
                     lineHeight = 21.sp
                 )
@@ -154,7 +154,7 @@ fun EmergencyFundsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit =
             ) {
                 Text(
                     text = "Your target should be based on essential monthly expenses, not your full lifestyle spending. Focus on the expenses you must pay even during a difficult month.",
-                    color = TextDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
                     lineHeight = 21.sp
                 )
@@ -175,7 +175,7 @@ fun EmergencyFundsLessonScreen(onBack: () -> Unit = {}, onContinue: () -> Unit =
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "Green items are usually essential. Grey items are usually optional and should be reduced first when budgeting.",
-                    color = TextGray,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     fontSize = 12.sp,
                     lineHeight = 17.sp
                 )
@@ -320,6 +320,7 @@ private fun FinancialGuideBubble() {
                         append(" of essential expenses, but beginners can start with a smaller first target.")
                     },
                     modifier = Modifier.padding(16.dp),
+                    color = TextDark,
                     fontSize = 14.sp,
                     lineHeight = 20.sp
                 )
@@ -345,7 +346,7 @@ private fun EmergencyCalculatorCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -358,7 +359,7 @@ private fun EmergencyCalculatorCard() {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Adjust the sliders to estimate how much emergency cash you may need.",
-                color = TextGray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
@@ -370,8 +371,8 @@ private fun EmergencyCalculatorCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Essential Monthly Spend", color = TextGray, fontSize = 13.sp)
-                Text("RM ${roundedSpend.formatAmount()}", color = TextDark, fontWeight = FontWeight.Bold)
+                Text("Essential Monthly Spend", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                Text("RM ${roundedSpend.formatAmount()}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
             }
             Slider(
                 value = monthlySpend,
@@ -399,7 +400,7 @@ private fun EmergencyCalculatorCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Coverage Duration", color = TextGray, fontSize = 13.sp)
+                Text("Coverage Duration", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                 Surface(
                     color = SecondaryGreen,
                     shape = RoundedCornerShape(8.dp)
@@ -407,7 +408,7 @@ private fun EmergencyCalculatorCard() {
                     Text(
                         "$coverageMonths Months",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = PrimaryGreen,
+                        color = DarkGreen,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
@@ -434,12 +435,12 @@ private fun EmergencyCalculatorCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Your Goal Amount", color = TextGray, fontSize = 14.sp)
+                Text("Your Goal Amount", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp)
                 Text(
                     text = "RM ${goalAmount.formatAmount()}",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
@@ -449,7 +450,7 @@ private fun EmergencyCalculatorCard() {
                     Text(
                         text = progressMessage,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        color = PrimaryGreen,
+                        color = DarkGreen,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -471,7 +472,7 @@ private fun EmergencyLessonCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -497,7 +498,7 @@ private fun EmergencyLessonCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = title,
-                        color = TextDark,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         lineHeight = 21.sp
@@ -520,7 +521,7 @@ private fun LearningGoalRow(text: String) {
     ) {
         Text("✓", color = PrimaryGreen, fontWeight = FontWeight.Bold, fontSize = 15.sp)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text, color = TextDark, fontSize = 14.sp, lineHeight = 20.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, lineHeight = 20.sp)
     }
 }
 
@@ -540,7 +541,7 @@ private fun ExpenseChip(label: String, isEssential: Boolean) {
         ) {
             Text(if (isEssential) "✅" else "➖", fontSize = 14.sp)
             Spacer(modifier = Modifier.width(6.dp))
-            Text(label, color = if (isEssential) DarkGreen else TextGray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = if (isEssential) DarkGreen else TextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -567,9 +568,9 @@ private fun EmergencyStageRow(stage: String, title: String, detail: String) {
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = TextDark, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(detail, color = TextGray, fontSize = 13.sp, lineHeight = 18.sp)
+            Text(detail, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }
@@ -593,8 +594,8 @@ private fun RuleRow(rule: String, description: String) {
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(rule, color = TextDark, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(description, color = TextGray, fontSize = 13.sp, lineHeight = 18.sp)
+            Text(rule, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }
@@ -639,8 +640,8 @@ private fun ActionStep(number: Int, title: String, description: String) {
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = TextDark, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(description, color = TextGray, fontSize = 13.sp, lineHeight = 18.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }

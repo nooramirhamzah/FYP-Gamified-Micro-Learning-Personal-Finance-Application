@@ -22,7 +22,7 @@ import com.company.fyp_prototype.ui.profile.ProfileScreen
 import com.company.fyp_prototype.ui.quizzes.EmergencyFundsQuizScreen
 import com.company.fyp_prototype.ui.quizzes.HighYieldQuizScreen
 import com.company.fyp_prototype.ui.quizzes.IntroQuizScreen
-import com.company.fyp_prototype.ui.quizzes.QuizScreen
+import com.company.fyp_prototype.ui.quizzes.BudgetQuizScreen
 import com.company.fyp_prototype.ui.theme.FYP_PrototypeTheme
 import com.company.fyp_prototype.ui.viewmodel.UserViewModel
 import com.company.fyp_prototype.ui.viewmodel.UserViewModelFactory
@@ -38,6 +38,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val hasCompletedOnboarding by userViewModel.hasCompletedOnboarding.collectAsState()
+            val activeRewards by userViewModel.activeRewards.collectAsState()
+            val isDarkModeActive = "dark_mode_theme" in activeRewards
             var currentScreen by remember { mutableStateOf<String?>(null) }
 
             LaunchedEffect(hasCompletedOnboarding) {
@@ -50,7 +52,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            FYP_PrototypeTheme(dynamicColor = false) {
+            FYP_PrototypeTheme(
+                darkTheme = isDarkModeActive,
+                dynamicColor = false
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -82,7 +87,7 @@ class MainActivity : ComponentActivity() {
                             onBack = { currentScreen = "intro_lesson" },
                             onFinish = { currentScreen = "home" }
                         )
-                        "budget_quiz", "quiz" -> QuizScreen(
+                        "budget_quiz", "quiz" -> BudgetQuizScreen(
                             userViewModel = userViewModel,
                             lessonId = "budget",
                             onBack = { currentScreen = "budget_lesson" },
