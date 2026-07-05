@@ -47,6 +47,7 @@ fun ProfileScreen(
     val hasGoldenFrame = "golden_saver_frame" in activeRewards
     val hasBudgetHeroTitle = "budget_hero_title" in activeRewards
     val hasEmergencyReadyTitle = "emergency_ready_title" in activeRewards
+    val hasDoubleCoinMultiplier = "double_coin_multiplier" in activeRewards
     val profileTitle = when {
         hasEmergencyReadyTitle -> "Emergency Ready"
         hasBudgetHeroTitle -> "Budget Hero"
@@ -63,7 +64,7 @@ fun ProfileScreen(
         else -> PrimaryGreen
     }
     val fullLeaderboardItems = buildRankedLeaderboard(displayName, coins)
-    val leaderboardItems = buildNearbyLeaderboardItems(fullLeaderboardItems)
+    val leaderboardItems = buildLeaderboardPreviewItems(fullLeaderboardItems)
     var showFullLeaderboard by remember { mutableStateOf(false) }
 
     if (showFullLeaderboard) {
@@ -190,12 +191,13 @@ fun ProfileScreen(
                         fontSize = 14.sp
                     )
                 }
-                if (hasGoldenFrame || hasBudgetHeroTitle || hasEmergencyReadyTitle) {
+                if (hasGoldenFrame || hasBudgetHeroTitle || hasEmergencyReadyTitle || hasDoubleCoinMultiplier) {
                     Spacer(modifier = Modifier.height(10.dp))
                     ActiveRewardEffectsRow(
                         hasGoldenFrame = hasGoldenFrame,
                         hasBudgetHeroTitle = hasBudgetHeroTitle,
-                        hasEmergencyReadyTitle = hasEmergencyReadyTitle
+                        hasEmergencyReadyTitle = hasEmergencyReadyTitle,
+                        hasDoubleCoinMultiplier = hasDoubleCoinMultiplier
                     )
                 }
             }
@@ -272,7 +274,8 @@ fun ProfileScreen(
 private fun ActiveRewardEffectsRow(
     hasGoldenFrame: Boolean,
     hasBudgetHeroTitle: Boolean,
-    hasEmergencyReadyTitle: Boolean
+    hasEmergencyReadyTitle: Boolean,
+    hasDoubleCoinMultiplier: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -298,6 +301,13 @@ private fun ActiveRewardEffectsRow(
                 icon = Icons.Default.Shield,
                 text = "Emergency Ready title active",
                 color = Color(0xFF00C853)
+            )
+        }
+        if (hasDoubleCoinMultiplier) {
+            RewardEffectChip(
+                icon = Icons.Default.Bolt,
+                text = "2x quiz coins active",
+                color = Color(0xFFFF9800)
             )
         }
     }
@@ -500,12 +510,15 @@ private fun buildRankedLeaderboard(userName: String, userCoins: Int): List<Leade
     }
 }
 
-private fun buildNearbyLeaderboardItems(rankedProfiles: List<LeaderboardItemData>): List<LeaderboardItemData> {
-    val userIndex = rankedProfiles.indexOfFirst { it.isUser }.coerceAtLeast(0)
-    val endIndex = (userIndex + 2).coerceAtMost(rankedProfiles.size)
-    val startIndex = (endIndex - 3).coerceAtLeast(0)
+private fun buildLeaderboardPreviewItems(rankedProfiles: List<LeaderboardItemData>): List<LeaderboardItemData> {
+    val topTwo = rankedProfiles.take(2)
+    val currentUser = rankedProfiles.firstOrNull { it.isUser }
 
-    return rankedProfiles.subList(startIndex, endIndex)
+    return if (currentUser != null && topTwo.none { it.isUser }) {
+        topTwo + currentUser
+    } else {
+        topTwo
+    }
 }
 
 private fun formatCoins(value: Int): String = "%,d".format(value)

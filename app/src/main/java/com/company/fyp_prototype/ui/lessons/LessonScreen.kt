@@ -935,9 +935,30 @@ private fun Int.formatMoney(): String = "%,d".format(this)
 
 private fun Int.yearLabel(): String = if (this == 1) "1 year" else "$this years"
 
+//@Preview(showBackground = true)
+//@Composable
+//fun LessonScreenPreview() {
+//    FYP_PrototypeTheme {
+//        LessonScreen()
+//    }
+//}
+
 @Preview(showBackground = true)
 @Composable
 fun LessonScreenPreview() {
+    FYP_PrototypeTheme {
+        LessonScreen()
+    }
+}
+
+@Preview(
+    name = "LessonScreen Full Content",
+    showBackground = true,
+    widthDp = 393,
+    heightDp = 3000
+)
+@Composable
+fun LessonScreenFullPreview() {
     FYP_PrototypeTheme {
         LessonScreen()
     }

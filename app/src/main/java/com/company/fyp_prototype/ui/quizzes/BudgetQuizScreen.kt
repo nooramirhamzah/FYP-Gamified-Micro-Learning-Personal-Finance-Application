@@ -58,7 +58,7 @@ fun BudgetQuizScreen(
         QuizResultsState(
             score = score,
             totalQuestions = totalQuestions,
-            reward = if (score >= 5) userViewModel.calculateLessonReward(score, totalQuestions) else 0,
+            reward = if (score >= 5) userViewModel.calculateActiveLessonReward(score, totalQuestions) else 0,
             onFinish = onComplete
         )
     } else {

@@ -694,6 +694,14 @@ private val rewardStoreItems = listOf(
         cost = 130,
         icon = Icons.Default.DarkMode,
         color = Color(0xFF5C6BC0)
+    ),
+    RewardStoreItem(
+        id = "double_coin_multiplier",
+        name = "Double Coin Multiplier",
+        description = "Doubles coins earned from completed quizzes while active.",
+        cost = 200,
+        icon = Icons.Default.Bolt,
+        color = Color(0xFFFF9800)
     )
 )
 
@@ -704,8 +712,8 @@ fun PortfolioScreenPreview() {
         PortfolioContent(
             coins = 2450,
             unlockedBadges = listOf("Thrifty Saver", "Savings Master"),
-            purchasedRewards = setOf("golden_saver_frame", "budget_hero_title", "dark_mode_theme"),
-            activeRewards = setOf("dark_mode_theme")
+            purchasedRewards = setOf("golden_saver_frame", "budget_hero_title", "dark_mode_theme", "double_coin_multiplier"),
+            activeRewards = setOf("dark_mode_theme", "double_coin_multiplier")
         )
     }
 }

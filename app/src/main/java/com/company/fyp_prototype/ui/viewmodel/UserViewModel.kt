@@ -66,6 +66,12 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         return baseReward + performanceBonus
     }
 
+    fun calculateActiveLessonReward(correctAnswers: Int, totalQuestions: Int): Int {
+        val baseReward = calculateLessonReward(correctAnswers, totalQuestions)
+        val multiplier = if ("double_coin_multiplier" in activeRewards.value) 2 else 1
+        return baseReward * multiplier
+    }
+
     fun addCoins(amount: Int) {
         viewModelScope.launch {
             val currentProgress = _userProgress.value ?: UserProgressEntity()
@@ -93,7 +99,7 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
             val currentProgress = _userProgress.value ?: UserProgressEntity()
             val completedLessonIds = currentProgress.completedLessons.toMutableCsvSet()
             completedLessonIds.add(lessonId)
-            val reward = calculateLessonReward(score, totalQuestions)
+            val reward = calculateActiveLessonReward(score, totalQuestions)
 
             val updatedProgress = currentProgress.copy(
                 coins = currentProgress.coins + reward,
